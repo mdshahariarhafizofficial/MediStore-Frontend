@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/store/auth.store';
+import { sellerApi } from '@/lib/api/seller';
 
 export default function SellerDashboardPage() {
   const router = useRouter();
@@ -24,55 +25,85 @@ export default function SellerDashboardPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  // Mock data for seller dashboard
+  // Fetch seller data
+  const { data: medicinesData } = useQuery({
+    queryKey: ['seller-medicines'],
+    queryFn: () => sellerApi.getMedicines(),
+    enabled: isAuthenticated && user?.role === 'SELLER',
+  });
+
+  const { data: ordersData } = useQuery({
+    queryKey: ['seller-orders'],
+    queryFn: () => sellerApi.getOrders(),
+    enabled: isAuthenticated && user?.role === 'SELLER',
+  });
+
+  const medicines = medicinesData?.data || [];
+  const orders = ordersData?.data || [];
+
+  // Calculate stats from real data
   const stats = [
     { 
       label: 'Total Products', 
-      value: '45', 
-      change: '+12%', 
+      value: medicines.length, 
       icon: Package,
       color: 'blue',
       link: '/seller/medicines'
     },
     { 
       label: 'Total Revenue', 
-      value: '৳12,450', 
-      change: '+18%', 
+      value: `৳${orders.reduce((sum, order) => sum + order.totalAmount, 0).toLocaleString()}`, 
       icon: DollarSign,
       color: 'green',
       link: '/seller/orders'
     },
     { 
       label: 'Total Orders', 
-      value: '156', 
-      change: '+8%', 
+      value: orders.length, 
       icon: ShoppingCart,
       color: 'purple',
       link: '/seller/orders'
     },
     { 
       label: 'Active Customers', 
-      value: '89', 
-      change: '+5%', 
+      value: new Set(orders.map(order => order.customerId)).size,
       icon: Users,
       color: 'orange',
       link: '#'
     },
   ];
 
-  const recentOrders = [
-    { id: 1, customer: 'John Doe', amount: '৳450', status: 'Processing', time: '2 hours ago' },
-    { id: 2, customer: 'Jane Smith', amount: '৳320', status: 'Shipped', time: '5 hours ago' },
-    { id: 3, customer: 'Bob Johnson', amount: '৳780', status: 'Delivered', time: '1 day ago' },
-    { id: 4, customer: 'Alice Brown', amount: '৳230', status: 'Placed', time: '2 days ago' },
-  ];
+  const recentOrders = orders.slice(0, 4).map(order => ({
+    id: order.orderNumber,
+    customer: order.customer?.name || 'Unknown',
+    amount: `৳${order.totalAmount}`,
+    status: order.status,
+    time: new Date(order.createdAt).toLocaleDateString('en-BD', {
+      day: 'numeric',
+      month: 'short',
+    }),
+  }));
 
-  const topProducts = [
-    { name: 'Paracetamol 500mg', sales: 45, revenue: '৳1,350' },
-    { name: 'Vitamin C 1000mg', sales: 32, revenue: '৳2,048' },
-    { name: 'Cetirizine 10mg', sales: 28, revenue: '৳896' },
-    { name: 'Omeprazole 20mg', sales: 24, revenue: '৳1,200' },
-  ];
+  // Calculate top products
+  const productSales: Record<string, { sales: number; revenue: number }> = {};
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      if (!productSales[item.medicine.name]) {
+        productSales[item.medicine.name] = { sales: 0, revenue: 0 };
+      }
+      productSales[item.medicine.name].sales += item.quantity;
+      productSales[item.medicine.name].revenue += item.price * item.quantity;
+    });
+  });
+
+  const topProducts = Object.entries(productSales)
+    .sort((a, b) => b[1].sales - a[1].sales)
+    .slice(0, 4)
+    .map(([name, data]) => ({
+      name,
+      sales: data.sales,
+      revenue: `৳${data.revenue.toLocaleString()}`,
+    }));
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -115,11 +146,6 @@ export default function SellerDashboardPage() {
                   }`}>
                     <stat.icon className="h-6 w-6" />
                   </div>
-                  <span className={`text-sm font-medium ${
-                    stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {stat.change}
-                  </span>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
                 <p className="text-gray-600">{stat.label}</p>
@@ -150,7 +176,7 @@ export default function SellerDashboardPage() {
                       <th className="text-left py-3 text-sm font-medium text-gray-500">Customer</th>
                       <th className="text-left py-3 text-sm font-medium text-gray-500">Amount</th>
                       <th className="text-left py-3 text-sm font-medium text-gray-500">Status</th>
-                      <th className="text-left py-3 text-sm font-medium text-gray-500">Time</th>
+                      <th className="text-left py-3 text-sm font-medium text-gray-500">Date</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -241,7 +267,6 @@ export default function SellerDashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-gray-900">{product.revenue}</p>
-                      <p className="text-sm text-green-600">+12%</p>
                     </div>
                   </div>
                 ))}
@@ -271,18 +296,23 @@ export default function SellerDashboardPage() {
                       <p className="text-sm text-gray-500">Orders being prepared</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-gray-900">4</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {orders.filter(o => o.status === 'PROCESSING').length}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <div className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
                     <div>
-                      <p className="font-medium text-gray-900">Ready to Ship</p>
-                      <p className="text-sm text-gray-500">Orders packed</p>
+                      <p className="font-medium text-gray-900">Delivered Today</p>
+                      <p className="text-sm text-gray-500">Orders delivered</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-gray-900">2</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {orders.filter(o => o.status === 'DELIVERED' && 
+                      new Date(o.createdAt).toDateString() === new Date().toDateString()).length}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
@@ -293,7 +323,9 @@ export default function SellerDashboardPage() {
                       <p className="text-sm text-gray-500">Products to restock</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-gray-900">3</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {medicines.filter(m => m.stock < 10).length}
+                  </span>
                 </div>
               </div>
             </div>
@@ -304,20 +336,27 @@ export default function SellerDashboardPage() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span>Conversion Rate</span>
-                  <span className="font-bold">4.8%</span>
+                  <span className="font-bold">
+                    {orders.length > 0 ? `${Math.min(100, (orders.length / 100) * 100).toFixed(1)}%` : '0%'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Avg. Order Value</span>
-                  <span className="font-bold">৳320</span>
+                  <span className="font-bold">
+                    ৳{orders.length > 0 ? (orders.reduce((sum, order) => sum + order.totalAmount, 0) / orders.length).toFixed(0) : '0'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>Customer Rating</span>
-                  <span className="font-bold">4.7/5</span>
+                  <span>Order Success Rate</span>
+                  <span className="font-bold">
+                    {orders.length > 0 ? 
+                      ((orders.filter(o => o.status === 'DELIVERED').length / orders.length) * 100).toFixed(0) : 0}%
+                  </span>
                 </div>
               </div>
               <div className="mt-6 pt-6 border-t border-white/20">
                 <p className="text-sm text-primary-100">
-                  Last updated: Today, 2:30 PM
+                  Last updated: {new Date().toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
             </div>

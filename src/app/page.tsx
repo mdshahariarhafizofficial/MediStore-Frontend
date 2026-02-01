@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Shield, Truck, Clock, Star, CheckCircle, Users, Award } from 'lucide-react';
+import { ArrowRight, Shield, Truck, Clock, Star, CheckCircle, Users, Award, Package } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import MedicineCard from '@/components/medicine/MedicineCard';
 import { useQuery } from '@tanstack/react-query';
@@ -83,85 +83,101 @@ export default function HomePage() {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative gradient-bg text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm mb-4">
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  Trusted by 50,000+ customers
-                </span>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                  Your Health,
-                  <span className="block text-white/90">Our Priority</span>
-                </h1>
-                <p className="text-xl text-white/80 mt-6 max-w-2xl">
-                  Get authentic medicines delivered safely to your doorstep. Bangladesh's most trusted online pharmacy.
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/shop" className="group">
-                  <Button size="lg" className="bg-white text-primary-700 hover:bg-gray-100 px-8">
-                    Shop Medicines
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-8">
-                    Create Account
-                  </Button>
-                </Link>
-              </div>
+    <section className="relative gradient-bg text-white overflow-hidden">
+      <div className="absolute inset-0 bg-black/10" />
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-8">
+            <div>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm mb-4">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Trusted by 50,000+ customers
+              </span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                Your Health,
+                <span className="block text-white/90">Our Priority</span>
+              </h1>
+              <p className="text-xl text-white/80 mt-6 max-w-2xl">
+                Get authentic medicines delivered safely to your doorstep. Bangladesh's most trusted online pharmacy.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/shop">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-primary-700 hover:bg-gray-100 px-8"
+                >
+                  Shop Medicines
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="border-white/30 text-white hover:bg-white/10 px-8"
+                >
+                  Create Account
+                </Button>
+              </Link>
+            </div>
 
-              <div className="grid grid-cols-3 gap-6 pt-8">
-                <div>
-                  <p className="text-3xl font-bold">10K+</p>
-                  <p className="text-sm text-white/70">Medicines</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold">50K+</p>
-                  <p className="text-sm text-white/70">Happy Customers</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold">24/7</p>
-                  <p className="text-sm text-white/70">Support</p>
+            <div className="grid grid-cols-3 gap-6 pt-8">
+              <div>
+                <p className="text-3xl font-bold">10K+</p>
+                <p className="text-sm text-white/70">Medicines</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold">50K+</p>
+                <p className="text-sm text-white/70">Happy Customers</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold">24/7</p>
+                <p className="text-sm text-white/70">Support</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <div className="aspect-[4/3] bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm flex items-center justify-center">
+                <div className="text-center">
+                  <div className="inline-flex items-center justify-center w-32 h-32 bg-white/20 rounded-full mb-6">
+                    <Package className="h-16 w-16 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">MediStore Pharmacy</h3>
+                  <p className="text-white/80">Authentic Medicines</p>
+                  <p className="text-white/80">Fast Delivery</p>
                 </div>
               </div>
             </div>
-
-            <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <div className="aspect-[4/3] bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm" />
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-xl p-4 shadow-xl">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Truck className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Fast Delivery</p>
-                    <p className="text-sm text-gray-600">Within 2-4 hours</p>
-                  </div>
+            <div className="absolute -bottom-6 -left-6 bg-white rounded-xl p-4 shadow-xl">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Truck className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Fast Delivery</p>
+                  <p className="text-sm text-gray-600">Within 2-4 hours</p>
                 </div>
               </div>
-              <div className="absolute -top-6 -right-6 bg-white rounded-xl p-4 shadow-xl">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Shield className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">100% Secure</p>
-                    <p className="text-sm text-gray-600">Safe & Authentic</p>
-                  </div>
+            </div>
+            <div className="absolute -top-6 -right-6 bg-white rounded-xl p-4 shadow-xl">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">100% Secure</p>
+                  <p className="text-sm text-gray-600">Safe & Authentic</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
       {/* Features Section */}
       <section className="py-20 bg-white">

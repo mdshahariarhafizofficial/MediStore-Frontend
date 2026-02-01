@@ -3,12 +3,13 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, ShoppingCart, Package, Heart, Shield, Truck } from 'lucide-react';
+import { Star, ShoppingCart, Heart, Shield, Truck, Package } from 'lucide-react';
 import { Medicine } from '@/lib/types';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/store/auth.store';
 import { cartApi } from '@/lib/api/cart';
 import { useCartStore } from '@/store/cart.store';
+import { useWishlistStore } from '@/store/wishlist.store';
 import toast from 'react-hot-toast';
 
 interface MedicineCardProps {
@@ -18,8 +19,8 @@ interface MedicineCardProps {
 const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
   const { user, isAuthenticated } = useAuthStore();
   const { addItem } = useCartStore();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
   const [isAdding, setIsAdding] = React.useState(false);
-  const [isWishlisted, setIsWishlisted] = React.useState(false);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated || user?.role !== 'CUSTOMER') {
@@ -46,8 +47,13 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
   };
 
   const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist');
+    if (isInWishlist(medicine.id)) {
+      removeFromWishlist(medicine.id);
+      toast.success('Removed from wishlist');
+    } else {
+      addToWishlist(medicine);
+      toast.success('Added to wishlist');
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -78,7 +84,7 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
                 alt={medicine.name}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-500"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-6">
@@ -102,14 +108,14 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
           onClick={handleWishlist}
           className="absolute top-4 left-4 p-2.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 shadow-lg hover:shadow-xl"
         >
-          <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+          <Heart className={`h-4 w-4 ${isInWishlist(medicine.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
         </button>
 
         {/* Quick View Overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <div className="flex justify-center space-x-2">
             <Link href={`/shop/${medicine.id}`}>
-              <Button size="sm" variant="primary" className="text-black bg-white hover:text-white hover:bg-gray-100">
+              <Button size="sm" variant="primary" className="bg-white text-gray-900 hover:bg-gray-100">
                 Quick View
               </Button>
             </Link>

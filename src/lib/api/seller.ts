@@ -1,28 +1,28 @@
 import axiosInstance from './axios';
-import { Medicine, Order, ApiResponse } from '@/lib/types';
+import { ApiResponse, Medicine, Order } from '@/lib/types';
 
 export const sellerApi = {
-  getMedicines: (): Promise<ApiResponse<Medicine[]>> => {
+  getMedicines: async (): Promise<ApiResponse<Medicine[]>> => {
     return axiosInstance.get('/seller/medicines');
   },
 
-  addMedicine: (data: any): Promise<ApiResponse<Medicine>> => {
+  addMedicine: async (data: any): Promise<ApiResponse<Medicine>> => {
     return axiosInstance.post('/seller/medicines', data);
   },
 
-  updateMedicine: (id: string, data: any): Promise<ApiResponse<Medicine>> => {
+  updateMedicine: async (id: string, data: any): Promise<ApiResponse<Medicine>> => {
     return axiosInstance.put(`/seller/medicines/${id}`, data);
   },
 
-  deleteMedicine: (id: string): Promise<ApiResponse> => {
+  deleteMedicine: async (id: string): Promise<ApiResponse> => {
     return axiosInstance.delete(`/seller/medicines/${id}`);
   },
 
-  getOrders: (): Promise<ApiResponse<Order[]>> => {
+  getOrders: async (): Promise<ApiResponse<Order[]>> => {
     return axiosInstance.get('/seller/orders');
   },
 
-  updateOrderStatus: (id: string, status: string): Promise<ApiResponse> => {
-    return axiosInstance.patch(`/seller/orders/${id}/status`, { status });
+  updateOrderStatus: async (id: string, data: { status: string }): Promise<ApiResponse<Order>> => {
+    return axiosInstance.patch(`/seller/orders/${id}/status`, data);
   },
 };

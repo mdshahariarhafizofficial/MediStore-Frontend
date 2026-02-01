@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { 
   Plus, Search, Filter, Edit, Trash2, 
   Package, AlertCircle, Eye, MoreVertical,
-  TrendingUp, Star, DollarSign
+  TrendingUp, Star, DollarSign, Save,
+  Calendar, Shield
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -16,6 +17,7 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/store/auth.store';
 import { sellerApi } from '@/lib/api/seller';
+import { medicineApi } from '@/lib/api/medicine';
 
 export default function SellerMedicinesPage() {
   const router = useRouter();
@@ -26,6 +28,16 @@ export default function SellerMedicinesPage() {
   const [selectedMedicine, setSelectedMedicine] = useState<any>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [medicineToDelete, setMedicineToDelete] = useState<any>(null);
+  const [newMedicine, setNewMedicine] = useState({
+    name: '',
+    description: '',
+    price: '',
+    stock: '',
+    manufacturer: '',
+    expiryDate: '',
+    categoryId: '',
+    imageUrl: ''
+  });
 
   // Redirect if not authenticated as seller
   useEffect(() => {
@@ -41,7 +53,48 @@ export default function SellerMedicinesPage() {
     enabled: isAuthenticated && user?.role === 'SELLER',
   });
 
-  const medicines = medicinesData?.data || [];
+  // Fetch categories
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => medicineApi.getCategories(),
+  });
+
+  // Add medicine mutation
+  const addMutation = useMutation({
+    mutationFn: (data: any) => sellerApi.addMedicine(data),
+    onSuccess: () => {
+      toast.success('Medicine added successfully');
+      refetch();
+      setIsAddModalOpen(false);
+      setNewMedicine({
+        name: '',
+        description: '',
+        price: '',
+        stock: '',
+        manufacturer: '',
+        expiryDate: '',
+        categoryId: '',
+        imageUrl: ''
+      });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to add medicine');
+    },
+  });
+
+  // Update medicine mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      sellerApi.updateMedicine(id, data),
+    onSuccess: () => {
+      toast.success('Medicine updated successfully');
+      refetch();
+      setIsEditModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update medicine');
+    },
+  });
 
   // Delete medicine mutation
   const deleteMutation = useMutation({
@@ -56,8 +109,21 @@ export default function SellerMedicinesPage() {
     },
   });
 
+  const medicines = medicinesData?.data || [];
+  const categories = categoriesData?.data || [];
+
   const handleEdit = (medicine: any) => {
     setSelectedMedicine(medicine);
+    setNewMedicine({
+      name: medicine.name,
+      description: medicine.description,
+      price: medicine.price.toString(),
+      stock: medicine.stock.toString(),
+      manufacturer: medicine.manufacturer,
+      expiryDate: medicine.expiryDate.split('T')[0],
+      categoryId: medicine.categoryId,
+      imageUrl: medicine.imageUrl || ''
+    });
     setIsEditModalOpen(true);
   };
 
@@ -72,16 +138,74 @@ export default function SellerMedicinesPage() {
     }
   };
 
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const medicineData = {
+      name: newMedicine.name,
+      description: newMedicine.description,
+      price: parseFloat(newMedicine.price),
+      stock: parseInt(newMedicine.stock),
+      manufacturer: newMedicine.manufacturer,
+      expiryDate: newMedicine.expiryDate,
+      categoryId: newMedicine.categoryId,
+      imageUrl: newMedicine.imageUrl || undefined
+    };
+
+    addMutation.mutate(medicineData);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedMedicine) return;
+
+    const medicineData = {
+      name: newMedicine.name,
+      description: newMedicine.description,
+      price: parseFloat(newMedicine.price),
+      stock: parseInt(newMedicine.stock),
+      manufacturer: newMedicine.manufacturer,
+      expiryDate: newMedicine.expiryDate,
+      categoryId: newMedicine.categoryId,
+      imageUrl: newMedicine.imageUrl || undefined
+    };
+
+    updateMutation.mutate({ id: selectedMedicine.id, data: medicineData });
+  };
+
   const filteredMedicines = medicines.filter(medicine =>
     medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     medicine.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Calculate stats from real data
   const stats = [
-    { label: 'Total Products', value: medicines.length, icon: Package, color: 'blue' },
-    { label: 'Low Stock', value: medicines.filter(m => m.stock < 10).length, icon: AlertCircle, color: 'red' },
-    { label: 'Top Rated', value: medicines.filter(m => m._count?.reviews > 5).length, icon: Star, color: 'yellow' },
-    { label: 'Total Revenue', value: '৳12,450', icon: DollarSign, color: 'green' },
+    { 
+      label: 'Total Products', 
+      value: medicines.length, 
+      icon: Package, 
+      color: 'blue' 
+    },
+    { 
+      label: 'Low Stock', 
+      value: medicines.filter(m => m.stock < 10).length, 
+      icon: AlertCircle, 
+      color: 'red' 
+    },
+    { 
+      label: 'Total Revenue', 
+      value: `৳${medicines.reduce((sum, m) => sum + (m.price * m._count?.orderItems || 0), 0).toLocaleString()}`,
+      icon: DollarSign, 
+      color: 'green' 
+    },
+    { 
+      label: 'Avg. Rating', 
+      value: medicines.length > 0 ? 
+        (medicines.reduce((sum, m) => sum + (m._count?.reviews || 0), 0) / medicines.length).toFixed(1) : '0.0', 
+      icon: Star, 
+      color: 'yellow' 
+    },
   ];
 
   const getColorClasses = (color: string) => {
@@ -250,9 +374,6 @@ export default function SellerMedicinesPage() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-gray-600">
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -286,69 +407,122 @@ export default function SellerMedicinesPage() {
           title="Add New Medicine"
           size="lg"
         >
-          <div className="p-6">
-            <p className="text-gray-600 mb-6">Fill in the details to add a new medicine to your store</p>
-            <form className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Medicine Name
-                  </label>
-                  <Input placeholder="e.g., Paracetamol 500mg" />
+          <form onSubmit={handleAddSubmit}>
+            <div className="p-6">
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Medicine Name *
+                    </label>
+                    <Input
+                      value={newMedicine.name}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
+                      placeholder="e.g., Paracetamol 500mg"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Manufacturer *
+                    </label>
+                    <Input
+                      value={newMedicine.manufacturer}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
+                      placeholder="e.g., ACI Limited"
+                      required
+                    />
+                  </div>
                 </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Manufacturer
+                    Description *
                   </label>
-                  <Input placeholder="e.g., ACI Limited" />
+                  <textarea
+                    value={newMedicine.description}
+                    onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Describe the medicine, its uses, and benefits..."
+                    required
+                  />
+                </div>
+                
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price (৳) *
+                    </label>
+                    <Input
+                      type="number"
+                      value={newMedicine.price}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, price: e.target.value })}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Stock *
+                    </label>
+                    <Input
+                      type="number"
+                      value={newMedicine.stock}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, stock: e.target.value })}
+                      placeholder="0"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Expiry Date *
+                    </label>
+                    <Input
+                      type="date"
+                      value={newMedicine.expiryDate}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, expiryDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Category *
+                    </label>
+                    <select
+                      value={newMedicine.categoryId}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, categoryId: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Select category</option>
+                      {categories.map((cat: any) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Image URL (Optional)
+                    </label>
+                    <Input
+                      value={newMedicine.imageUrl}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, imageUrl: e.target.value })}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Describe the medicine, its uses, and benefits..."
-                />
-              </div>
-              
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price (৳)
-                  </label>
-                  <Input type="number" placeholder="0.00" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stock
-                  </label>
-                  <Input type="number" placeholder="0" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                    <option>Select category</option>
-                    <option>Pain Relief</option>
-                    <option>Cold & Cough</option>
-                    <option>First Aid</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Image URL (Optional)
-                </label>
-                <Input placeholder="https://example.com/image.jpg" />
-              </div>
-              
-              <div className="flex justify-end space-x-3 pt-6">
+              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
                 <Button
                   type="button"
                   variant="outline"
@@ -356,12 +530,16 @@ export default function SellerMedicinesPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
+                <Button
+                  type="submit"
+                  loading={addMutation.isPending}
+                >
+                  <Save className="h-4 w-4 mr-2" />
                   Add Medicine
                 </Button>
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </Modal>
 
         {/* Edit Medicine Modal */}
@@ -371,86 +549,139 @@ export default function SellerMedicinesPage() {
           title="Edit Medicine"
           size="lg"
         >
-          {selectedMedicine && (
+          <form onSubmit={handleEditSubmit}>
             <div className="p-6">
-              <form className="space-y-4">
+              <div className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Medicine Name
+                      Medicine Name *
                     </label>
-                    <Input defaultValue={selectedMedicine.name} />
+                    <Input
+                      value={newMedicine.name}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
+                      placeholder="e.g., Paracetamol 500mg"
+                      required
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Manufacturer
+                      Manufacturer *
                     </label>
-                    <Input defaultValue={selectedMedicine.manufacturer} />
+                    <Input
+                      value={newMedicine.manufacturer}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
+                      placeholder="e.g., ACI Limited"
+                      required
+                    />
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    Description *
                   </label>
                   <textarea
+                    value={newMedicine.description}
+                    onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
                     rows={3}
-                    defaultValue={selectedMedicine.description}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Describe the medicine, its uses, and benefits..."
+                    required
                   />
                 </div>
                 
                 <div className="grid md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Price (৳)
+                      Price (৳) *
                     </label>
-                    <Input type="number" defaultValue={selectedMedicine.price} />
+                    <Input
+                      type="number"
+                      value={newMedicine.price}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, price: e.target.value })}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      required
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Stock
+                      Stock *
                     </label>
-                    <Input type="number" defaultValue={selectedMedicine.stock} />
+                    <Input
+                      type="number"
+                      value={newMedicine.stock}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, stock: e.target.value })}
+                      placeholder="0"
+                      min="0"
+                      required
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Category
+                      Expiry Date *
                     </label>
-                    <select 
-                      defaultValue={selectedMedicine.categoryId}
+                    <Input
+                      type="date"
+                      value={newMedicine.expiryDate}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, expiryDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Category *
+                    </label>
+                    <select
+                      value={newMedicine.categoryId}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, categoryId: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      required
                     >
-                      <option>Select category</option>
-                      <option>Pain Relief</option>
-                      <option>Cold & Cough</option>
-                      <option>First Aid</option>
+                      <option value="">Select category</option>
+                      {categories.map((cat: any) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Image URL (Optional)
+                    </label>
+                    <Input
+                      value={newMedicine.imageUrl}
+                      onChange={(e) => setNewMedicine({ ...newMedicine, imageUrl: e.target.value })}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image URL
-                  </label>
-                  <Input defaultValue={selectedMedicine.imageUrl} />
-                </div>
-                
-                <div className="flex justify-end space-x-3 pt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsEditModalOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    Save Changes
-                  </Button>
-                </div>
-              </form>
+              </div>
+              
+              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  loading={updateMutation.isPending}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+              </div>
             </div>
-          )}
+          </form>
         </Modal>
 
         {/* Delete Confirmation Modal */}
@@ -460,32 +691,34 @@ export default function SellerMedicinesPage() {
           title="Delete Medicine"
           size="md"
         >
-          <div className="p-6">
-            <div className="text-center">
-              <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Delete {medicineToDelete?.name}?
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete this medicine? This action cannot be undone.
-              </p>
-              <div className="flex justify-center space-x-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDeleteModalOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="danger"
-                  loading={deleteMutation.isPending}
-                  onClick={confirmDelete}
-                >
-                  Delete
-                </Button>
+          {medicineToDelete && (
+            <div className="p-6">
+              <div className="text-center">
+                <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Delete {medicineToDelete.name}?
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to delete this medicine? This action cannot be undone.
+                </p>
+                <div className="flex justify-center space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDeleteModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="danger"
+                    loading={deleteMutation.isPending}
+                    onClick={confirmDelete}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </Modal>
       </div>
     </div>

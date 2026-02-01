@@ -29,4 +29,8 @@ export const adminApi = {
   deleteCategory: async (id: string): Promise<ApiResponse> => {
     return axiosInstance.delete(`/admin/categories/${id}`);
   },
+  
+  getDashboardStats: async (): Promise<ApiResponse<any>> => {
+    return axiosInstance.get('/admin/dashboard/stats');
+  },
 };

@@ -14,7 +14,7 @@ export default function HomePage() {
     queryKey: ['featured-medicines'],
     queryFn: () =>
       medicineApi.getAllMedicines({
-        limit: 8,
+        limit: 6,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }),
@@ -352,19 +352,19 @@ export default function HomePage() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
-              <Button size="lg" className="bg-white text-primary-700 hover:bg-gray-100 px-8">
+              <Button size="lg" className="bg-white text-black hover:text-white hover:bg-gray-100 px-8">
                 Get Started Free
               </Button>
             </Link>
             <Link href="/shop">
-              <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-8">
+              <Button variant="outline" size="lg" className="border-white/30 text-black hover:text-white hover:bg-white/10 px-8">
                 Browse Medicines
               </Button>
             </Link>
           </div>
           
           <div className="mt-8 text-sm text-primary-200">
-            <p>✅ No hidden fees • ✅ Free delivery on first order • ✅ 24/7 support</p>
+            <p> • ✔ No hidden fees • ✔ Free delivery on first order • ✔ 24/7 support</p>
           </div>
         </div>
       </section>

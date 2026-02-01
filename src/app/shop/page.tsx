@@ -5,8 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { 
   Search, Filter, SlidersHorizontal, Grid3X3, List, 
   ChevronLeft, ChevronRight, Package, Star, Truck, 
-  Shield, Clock, TrendingUp, 
-  ShoppingCart
+  Shield, Clock, TrendingUp, ShoppingCart
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import MedicineCard from '@/components/medicine/MedicineCard';
@@ -15,10 +14,16 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { medicineApi } from '@/lib/api/medicine';
 import { Category } from '@/lib/types';
+import { cartApi } from '@/lib/api/cart';
+import { useAuthStore } from '@/store/auth.store';
+import { useCartStore } from '@/store/cart.store';
+import toast from 'react-hot-toast';
 
 export default function ShopPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const { addItem } = useCartStore();
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
@@ -83,6 +88,28 @@ export default function ShopPage() {
     setPage(newPage);
   };
 
+  const handleAddToCart = async (medicineId: string) => {
+    if (!isAuthenticated || user?.role !== 'CUSTOMER') {
+      toast.error('Please login as a customer to add items to cart');
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const response = await cartApi.addToCart({
+        medicineId,
+        quantity: 1,
+      });
+
+      if (response.success) {
+        addItem(response.data!);
+        toast.success('Added to cart successfully!');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add to cart');
+    }
+  };
+
   const sortOptions = [
     { value: 'createdAt', label: 'Newest', icon: Clock },
     { value: 'price', label: 'Price', icon: TrendingUp },
@@ -114,6 +141,7 @@ export default function ShopPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
                 placeholder="Search medicines, brands, or symptoms..."
                 className="w-full px-6 py-4 pl-14 rounded-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-white/30"
               />
@@ -332,11 +360,12 @@ export default function ShopPage() {
               </div>
             ) : medicinesData?.data?.medicines?.length ? (
               <>
-                <div className={`${
-                  viewMode === 'grid'
+                <div className={`
+                  ${viewMode === 'grid'
                     ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
                     : 'space-y-6'
-                }`}>
+                  }
+                `}>
                   {medicinesData.data.medicines.map((medicine: any) => (
                     viewMode === 'grid' ? (
                       <MedicineCard key={medicine.id} medicine={medicine} />
@@ -362,7 +391,7 @@ export default function ShopPage() {
                             <div className="flex justify-between items-start mb-3">
                               <div>
                                 <h3 className="text-xl font-bold text-gray-900 mb-2">{medicine.name}</h3>
-                                <p className="text-gray-600 mb-3">{medicine.description}</p>
+                                <p className="text-gray-600 mb-3 line-clamp-2">{medicine.description}</p>
                               </div>
                               <div className="text-2xl font-bold text-primary-600">
                                 ৳{medicine.price}
@@ -388,11 +417,19 @@ export default function ShopPage() {
                                     ({medicine.reviewCount || 0} reviews)
                                   </span>
                                 </div>
-                                <button className="text-primary-600 hover:text-primary-700 font-medium">
+                                <button 
+                                  onClick={() => router.push(`/shop/${medicine.id}`)}
+                                  className="text-primary-600 hover:text-primary-700 font-medium"
+                                >
                                   View Details
                                 </button>
                               </div>
-                              <Button variant="primary" size="md">
+                              <Button 
+                                variant="primary" 
+                                size="md"
+                                onClick={() => handleAddToCart(medicine.id)}
+                                disabled={medicine.stock === 0}
+                              >
                                 <ShoppingCart className="h-4 w-4 mr-2" />
                                 Add to Cart
                               </Button>

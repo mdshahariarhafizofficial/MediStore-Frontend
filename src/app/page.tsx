@@ -1,373 +1,526 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowRight, Shield, Truck, Clock, Star, CheckCircle, Users, Award, Package } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import MedicineCard from '@/components/medicine/MedicineCard';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { 
+  Search, Filter, SlidersHorizontal, Grid3X3, List, 
+  ChevronLeft, ChevronRight, Package, Star, Truck, 
+  Shield, Clock, TrendingUp, ShoppingCart
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import MedicineCard from '@/components/medicine/MedicineCard';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import { medicineApi } from '@/lib/api/medicine';
+import { Category } from '@/lib/types';
+import { cartApi } from '@/lib/api/cart';
+import { useAuthStore } from '@/store/auth.store';
+import { useCartStore } from '@/store/cart.store';
+import toast from 'react-hot-toast';
 
-export default function HomePage() {
-  const { data: featuredMedicines, isLoading } = useQuery({
-    queryKey: ['featured-medicines'],
+export default function ShopPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const { addItem } = useCartStore();
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [category, setCategory] = useState(searchParams.get('category') || '');
+  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
+  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'createdAt');
+  const [sortOrder, setSortOrder] = useState(searchParams.get('sortOrder') || 'desc');
+  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1'));
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Fetch categories
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => medicineApi.getCategories(),
+  });
+
+  // Fetch medicines with filters
+  const { data: medicinesData, isLoading } = useQuery({
+    queryKey: ['medicines', search, category, minPrice, maxPrice, sortBy, sortOrder, page],
     queryFn: () =>
       medicineApi.getAllMedicines({
-        limit: 6,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
+        search,
+        category: category || undefined,
+        minPrice: minPrice || undefined,
+        maxPrice: maxPrice || undefined,
+        sortBy,
+        sortOrder: sortOrder as 'asc' | 'desc',
+        page: page.toString(),
+        limit: '12',
       }),
   });
 
+  const handleFilter = () => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (category) params.set('category', category);
+    if (minPrice) params.set('minPrice', minPrice);
+    if (maxPrice) params.set('maxPrice', maxPrice);
+    if (sortBy !== 'createdAt') params.set('sortBy', sortBy);
+    if (sortOrder !== 'desc') params.set('sortOrder', sortOrder);
+    if (page > 1) params.set('page', page.toString());
+    
+    router.push(`/shop?${params.toString()}`);
+  };
+
+  const handleReset = () => {
+    setSearch('');
+    setCategory('');
+    setMinPrice('');
+    setMaxPrice('');
+    setSortBy('createdAt');
+    setSortOrder('desc');
+    setPage(1);
+    router.push('/shop');
+  };
+
+  useEffect(() => {
+    handleFilter();
+  }, [page]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleAddToCart = async (medicineId: string) => {
+    if (!isAuthenticated || user?.role !== 'CUSTOMER') {
+      toast.error('Please login as a customer to add items to cart');
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const response = await cartApi.addToCart({
+        medicineId,
+        quantity: 1,
+      });
+
+      if (response.success) {
+        addItem(response.data!);
+        toast.success('Added to cart successfully!');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add to cart');
+    }
+  };
+
+  const sortOptions = [
+    { value: 'createdAt', label: 'Newest', icon: Clock },
+    { value: 'price', label: 'Price', icon: TrendingUp },
+    { value: 'name', label: 'Name', icon: Package },
+  ];
+
   const features = [
-    {
-      icon: Shield,
-      title: '100% Authentic',
-      description: 'Verified medicines from licensed manufacturers',
-      color: 'from-blue-500 to-blue-600',
-    },
-    {
-      icon: Truck,
-      title: 'Fast Delivery',
-      description: 'Same-day delivery in metro cities',
-      color: 'from-green-500 to-green-600',
-    },
-    {
-      icon: Clock,
-      title: '24/7 Support',
-      description: 'Always available for your queries',
-      color: 'from-purple-500 to-purple-600',
-    },
-    {
-      icon: Award,
-      title: 'Certified Pharmacy',
-      description: 'Government approved and licensed',
-      color: 'from-orange-500 to-orange-600',
-    },
-  ];
-
-  const testimonials = [
-    {
-      name: 'Dr. Sarah Johnson',
-      role: 'Cardiologist',
-      content: 'As a doctor, I trust MediStore for all my patients\' medication needs. Reliable and authentic.',
-      rating: 5,
-      avatar: 'SJ',
-    },
-    {
-      name: 'Rahim Ahmed',
-      role: 'Regular Customer',
-      content: 'Been using MediStore for 2 years. Never faced any issues. Delivery is always on time.',
-      rating: 5,
-      avatar: 'RA',
-    },
-    {
-      name: 'Nusrat Jahan',
-      role: 'Working Mother',
-      content: 'MediStore has made managing my family\'s health so much easier. Highly recommended!',
-      rating: 5,
-      avatar: 'NJ',
-    },
-  ];
-
-  const categories = [
-    { name: 'Pain Relief', count: '120+ Products', icon: '💊' },
-    { name: 'Cold & Cough', count: '85+ Products', icon: '🤧' },
-    { name: 'First Aid', count: '65+ Products', icon: '🩹' },
-    { name: 'Vitamins', count: '95+ Products', icon: '🍊' },
-    { name: 'Digestive', count: '75+ Products', icon: '🤢' },
-    { name: 'Skin Care', count: '50+ Products', icon: '🧴' },
+    { icon: Shield, text: '100% Authentic', color: 'text-blue-600 bg-blue-50' },
+    { icon: Truck, text: 'Fast Delivery', color: 'text-green-600 bg-green-50' },
+    { icon: Star, text: 'Top Rated', color: 'text-yellow-600 bg-yellow-50' },
   ];
 
   return (
-    <div className="overflow-hidden">
-      {/* Hero Section */}
-    <section className="relative gradient-bg text-white overflow-hidden">
-      <div className="absolute inset-0 bg-black/10" />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <div>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm mb-4">
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Trusted by 50,000+ customers
-              </span>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Your Health,
-                <span className="block text-white/90">Our Priority</span>
-              </h1>
-              <p className="text-xl text-white/80 mt-6 max-w-2xl">
-                Get authentic medicines delivered safely to your doorstep. Bangladesh's most trusted online pharmacy.
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/shop">
-                <Button
-                  size="lg" 
-                  className="bg-white text-black hover:bg-gray-100 px-8 hover:text-white"
-                >
-                  Shop Medicines
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="border-white/30 hover:bg-white/10 px-8 hover:text-white"
-                >
-                  Create Account
-                </Button>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-3 gap-6 pt-8">
-              <div>
-                <p className="text-3xl font-bold">10K+</p>
-                <p className="text-sm text-white/70">Medicines</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold">50K+</p>
-                <p className="text-sm text-white/70">Happy Customers</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold">24/7</p>
-                <p className="text-sm text-white/70">Support</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Medicine Shop</h1>
+            <p className="text-xl text-primary-100 max-w-3xl mx-auto">
+              Discover authentic medicines from trusted manufacturers. Your health is our priority.
+            </p>
           </div>
 
-          <div className="relative">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-              <div className="aspect-[4/3] bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm flex items-center justify-center">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-32 h-32 bg-white/20 rounded-full mb-6">
-                    <Package className="h-16 w-16 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">MediStore Pharmacy</h3>
-                  <p className="text-white/80">Authentic Medicines</p>
-                  <p className="text-white/80">Fast Delivery</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-6 -left-6 bg-white rounded-xl p-4 shadow-xl">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Truck className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Fast Delivery</p>
-                  <p className="text-sm text-gray-600">Within 2-4 hours</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -top-6 -right-6 bg-white rounded-xl p-4 shadow-xl">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">100% Secure</p>
-                  <p className="text-sm text-gray-600">Safe & Authentic</p>
-                </div>
-              </div>
+          {/* Search Bar */}
+          <div className="mt-8 max-w-3xl mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
+                placeholder="Search medicines, brands, or symptoms..."
+                className="w-full px-6 py-4 pl-14 rounded-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-white/30"
+              />
+              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
+              <button
+                onClick={handleFilter}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary-800 text-white px-6 py-2.5 rounded-xl hover:bg-primary-900 transition-colors"
+              >
+                Search
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose <span className="text-gradient">MediStore</span>
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              We are committed to providing the safest and most reliable healthcare experience
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="group bg-white rounded-2xl p-6 shadow-soft hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-primary-100"
-              >
-                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} mb-5 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className="h-7 w-7 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+      {/* Features */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {features.map((feature, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-xl p-6 shadow-lg flex items-center space-x-4"
+            >
+              <div className={`p-3 rounded-lg ${feature.color}`}>
+                <feature.icon className="h-6 w-6" />
               </div>
-            ))}
-          </div>
+              <div>
+                <p className="font-semibold text-gray-900">{feature.text}</p>
+                <p className="text-sm text-gray-500">Guaranteed</p>
+              </div>
+            </div>
+          ))}
         </div>
-      </section>
+      </div>
 
-      {/* Categories */}
-      <section className="py-20 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-12">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900">Shop by Category</h2>
-              <p className="text-gray-600 mt-2">Find medicines for every need</p>
-            </div>
-            <Link href="/shop">
-              <Button variant="outline">
-                View All Categories
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Filters Sidebar */}
+          <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                  <Filter className="h-5 w-5 mr-2" />
+                  Filters
+                </h2>
+                <button
+                  onClick={handleReset}
+                  className="text-sm text-primary-600 hover:text-primary-700"
+                >
+                  Clear All
+                </button>
+              </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((category, index) => (
-              <Link
-                key={index}
-                href={`/shop?category=${category.name.toLowerCase()}`}
-                className="group bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-lg hover:border-primary-200 transition-all duration-300"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-3xl mb-3">{category.icon}</div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600">
-                      {category.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">{category.count}</p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Medicines */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-12">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900">Featured Medicines</h2>
-              <p className="text-gray-600 mt-2">Our most trusted healthcare products</p>
-            </div>
-            <Link href="/shop">
-              <Button variant="outline">
-                View All Products
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-gray-100 rounded-xl p-6 animate-pulse">
-                  <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              ))}
-            </div>
-          ) : featuredMedicines?.data?.medicines.length ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredMedicines.data.medicines.map((medicine) => (
-                <MedicineCard key={medicine.id} medicine={medicine} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No medicines available</h3>
-              <p className="text-gray-600">Check back soon for updates</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Loved by Our Customers
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Join thousands of satisfied customers who trust us with their health
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div 
-                key={index} 
-                className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100"
-              >
-                <div className="flex items-center mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+              {/* Categories */}
+              <div className="mb-8">
+                <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setCategory('')}
+                    className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                      category === '' ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    All Categories
+                  </button>
+                  {categoriesData?.data?.map((cat: Category) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setCategory(cat.id)}
+                      className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                        category === cat.id ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span>{cat.name}</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          {cat._count?.medicines || 0}
+                        </span>
+                      </div>
+                    </button>
                   ))}
                 </div>
-                <p className="text-gray-700 mb-6 italic">"{testimonial.content}"</p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold mr-4">
-                    {testimonial.avatar}
+              </div>
+
+              {/* Price Range */}
+              <div className="mb-8">
+                <h3 className="font-semibold text-gray-900 mb-4">Price Range</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Min</label>
+                      <input
+                        type="number"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                        placeholder="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Max</label>
+                      <input
+                        type="number"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                        placeholder="1000"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                    <p className="text-gray-600 text-sm">{testimonial.role}</p>
+                  <button
+                    onClick={handleFilter}
+                    className="w-full bg-primary-600 text-white py-2.5 rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    Apply Price Filter
+                  </button>
+                </div>
+              </div>
+
+              {/* Sort Options */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-4">Sort By</h3>
+                <div className="space-y-2">
+                  {sortOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setSortBy(option.value)}
+                      className={`flex items-center w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
+                        sortBy === option.value ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <option.icon className="h-4 w-4 mr-3" />
+                      <span>{option.label}</span>
+                      {sortBy === option.value && (
+                        <span className="ml-auto">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 flex space-x-2">
+                  <button
+                    onClick={() => setSortOrder('asc')}
+                    className={`flex-1 py-2 rounded-lg transition-colors ${
+                      sortOrder === 'asc' ? 'bg-primary-50 text-primary-700' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                  >
+                    Ascending
+                  </button>
+                  <button
+                    onClick={() => setSortOrder('desc')}
+                    className={`flex-1 py-2 rounded-lg transition-colors ${
+                      sortOrder === 'desc' ? 'bg-primary-50 text-primary-700' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                  >
+                    Descending
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:w-3/4">
+            {/* Header */}
+            <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    All Medicines
+                    {medicinesData?.data?.pagination?.total && (
+                      <span className="text-gray-500 text-lg font-normal ml-2">
+                        ({medicinesData.data.pagination.total} products)
+                      </span>
+                    )}
+                  </h2>
+                  {search && (
+                    <p className="text-gray-600 mt-1">
+                      Search results for: <span className="font-semibold">"{search}"</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="lg:hidden flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    Filters
+                  </button>
+
+                  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 ${viewMode === 'grid' ? 'bg-primary-50 text-primary-600' : 'hover:bg-gray-50'}`}
+                    >
+                      <Grid3X3 className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 ${viewMode === 'list' ? 'bg-primary-50 text-primary-600' : 'hover:bg-gray-50'}`}
+                    >
+                      <List className="h-5 w-5" />
+                    </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-12">
-            <div className="inline-flex items-center space-x-6 text-gray-500">
-              <Users className="h-6 w-6" />
-              <span className="text-sm">50,000+ happy customers and counting</span>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm mb-6">
-            <Shield className="h-4 w-4 mr-2" />
-            <span className="text-sm">Trusted & Secure</span>
-          </div>
-          
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to Experience Hassle-Free Healthcare?
-          </h2>
-          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-            Join Bangladesh's fastest growing online pharmacy. Get started in just 2 minutes.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
-              <Button size="lg" className="bg-white text-black hover:text-white hover:bg-gray-100 px-8">
-                Get Started Free
-              </Button>
-            </Link>
-            <Link href="/shop">
-              <Button variant="outline" size="lg" className="border-white/30 text-black hover:text-white hover:bg-white/10 px-8">
-                Browse Medicines
-              </Button>
-            </Link>
-          </div>
-          
-          <div className="mt-8 text-sm text-primary-200">
-            <p> • ✔ No hidden fees • ✔ Free delivery on first order • ✔ 24/7 support</p>
+            {/* Medicines Grid/List */}
+            {isLoading ? (
+              <div className="flex justify-center items-center h-96">
+                <LoadingSpinner size="lg" text="Loading medicines..." />
+              </div>
+            ) : medicinesData?.data?.medicines?.length ? (
+              <>
+                <div className={`
+                  ${viewMode === 'grid'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+                    : 'space-y-6'
+                  }
+                `}>
+                  {medicinesData.data.medicines.map((medicine: any) => (
+                    viewMode === 'grid' ? (
+                      <MedicineCard key={medicine.id} medicine={medicine} />
+                    ) : (
+                      <div key={medicine.id} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                        <div className="flex flex-col md:flex-row gap-6">
+                          <div className="md:w-1/4">
+                            <div className="relative h-48 bg-gray-100 rounded-xl overflow-hidden">
+                              {medicine.imageUrl ? (
+                                <img
+                                  src={medicine.imageUrl}
+                                  alt={medicine.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full">
+                                  <Package className="h-12 w-12 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="md:w-3/4">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">{medicine.name}</h3>
+                                <p className="text-gray-600 mb-3 line-clamp-2">{medicine.description}</p>
+                              </div>
+                              <div className="text-2xl font-bold text-primary-600">
+                                ৳{medicine.price}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              <span className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm">
+                                {medicine.category?.name}
+                              </span>
+                              <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">
+                                Stock: {medicine.stock}
+                              </span>
+                              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
+                                {medicine.manufacturer}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center space-x-4">
+                                <div className="flex items-center">
+                                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                                  <span className="ml-1 font-medium">{medicine.averageRating?.toFixed(1) || '0.0'}</span>
+                                  <span className="text-gray-500 text-sm ml-1">
+                                    ({medicine.reviewCount || 0} reviews)
+                                  </span>
+                                </div>
+                                <button 
+                                  onClick={() => router.push(`/shop/${medicine.id}`)}
+                                  className="text-primary-600 hover:text-primary-700 font-medium"
+                                >
+                                  View Details
+                                </button>
+                              </div>
+                              <Button 
+                                variant="primary" 
+                                size="md"
+                                onClick={() => handleAddToCart(medicine.id)}
+                                disabled={medicine.stock === 0}
+                              >
+                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                Add to Cart
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {medicinesData.data.pagination.totalPages > 1 && (
+                  <div className="mt-12 flex justify-center">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handlePageChange(page - 1)}
+                        disabled={page === 1}
+                        className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      
+                      {Array.from({ length: Math.min(5, medicinesData.data.pagination.totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (medicinesData.data.pagination.totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (page <= 3) {
+                          pageNum = i + 1;
+                        } else if (page >= medicinesData.data.pagination.totalPages - 2) {
+                          pageNum = medicinesData.data.pagination.totalPages - 4 + i;
+                        } else {
+                          pageNum = page - 2 + i;
+                        }
+                        
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`w-10 h-10 rounded-lg font-medium ${
+                              page === pageNum
+                                ? 'bg-primary-600 text-white'
+                                : 'border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                      
+                      <button
+                        onClick={() => handlePageChange(page + 1)}
+                        disabled={page === medicinesData.data.pagination.totalPages}
+                        className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </div>
+                    <div className="ml-6 flex items-center text-gray-600">
+                      <span className="text-sm">
+                        Page {page} of {medicinesData.data.pagination.totalPages}
+                      </span>
+                      <span className="mx-2">•</span>
+                      <span className="text-sm">
+                        {medicinesData.data.pagination.total} total medicines
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Package className="h-12 w-12 text-gray-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">No Medicines Found</h3>
+                <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                  {search
+                    ? `No medicines found for "${search}". Try a different search term.`
+                    : 'No medicines available at the moment. Please check back later.'}
+                </p>
+                {search && (
+                  <Button onClick={handleReset} variant="outline">
+                    Clear Search
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { CartItem } from '@/lib/types';
 
 interface CartState {
@@ -12,53 +13,60 @@ interface CartState {
   clearCart: () => void;
 }
 
-export const useCartStore = create<CartState>((set) => ({
-  items: [],
-  total: 0,
-  itemCount: 0,
-  setCart: (items, total, itemCount) => set({ items, total, itemCount }),
-  addItem: (item) =>
-    set((state) => ({
-      items: [...state.items, item],
-      itemCount: state.itemCount + 1,
-      total: state.total + item.medicine.price * item.quantity,
-    })),
-  updateItem: (id, quantity) =>
-    set((state) => {
-      const itemIndex = state.items.findIndex((item) => item.id === id);
-      if (itemIndex === -1) return state;
+export const useCartStore = create<CartState>()(
+  persist(
+    (set) => ({
+      items: [],
+      total: 0,
+      itemCount: 0,
+      setCart: (items, total, itemCount) => set({ items, total, itemCount }),
+      addItem: (item) =>
+        set((state) => {
+          const existingItem = state.items.find((i) => i.id === item.id);
+          if (existingItem) {
+            return {
+              items: state.items.map((i) =>
+                i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+              ),
+              total: state.total + (item.medicine.price * item.quantity),
+              itemCount: state.itemCount + item.quantity,
+            };
+          }
+          return {
+            items: [...state.items, item],
+            total: state.total + (item.medicine.price * item.quantity),
+            itemCount: state.itemCount + item.quantity,
+          };
+        }),
+      updateItem: (id, quantity) =>
+        set((state) => {
+          const item = state.items.find((i) => i.id === id);
+          if (!item) return state;
 
-      const oldItem = state.items[itemIndex];
-      const newItems = [...state.items];
-      newItems[itemIndex] = { ...oldItem, quantity };
+          const quantityDiff = quantity - item.quantity;
+          return {
+            items: state.items.map((i) =>
+              i.id === id ? { ...i, quantity } : i
+            ),
+            total: state.total + (item.medicine.price * quantityDiff),
+            itemCount: state.itemCount + quantityDiff,
+          };
+        }),
+      removeItem: (id) =>
+        set((state) => {
+          const item = state.items.find((i) => i.id === id);
+          if (!item) return state;
 
-      const newTotal = newItems.reduce(
-        (sum, item) => sum + item.medicine.price * item.quantity,
-        0
-      );
-
-      return {
-        items: newItems,
-        total: newTotal,
-        itemCount: newItems.length,
-      };
+          return {
+            items: state.items.filter((i) => i.id !== id),
+            total: state.total - (item.medicine.price * item.quantity),
+            itemCount: state.itemCount - item.quantity,
+          };
+        }),
+      clearCart: () => set({ items: [], total: 0, itemCount: 0 }),
     }),
-  removeItem: (id) =>
-    set((state) => {
-      const item = state.items.find((item) => item.id === id);
-      if (!item) return state;
-
-      const newItems = state.items.filter((item) => item.id !== id);
-      const newTotal = newItems.reduce(
-        (sum, item) => sum + item.medicine.price * item.quantity,
-        0
-      );
-
-      return {
-        items: newItems,
-        total: newTotal,
-        itemCount: newItems.length,
-      };
-    }),
-  clearCart: () => set({ items: [], total: 0, itemCount: 0 }),
-}));
+    {
+      name: 'medistore-cart',
+    }
+  )
+);

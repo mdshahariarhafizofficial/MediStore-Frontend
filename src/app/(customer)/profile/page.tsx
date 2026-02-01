@@ -2,19 +2,22 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   User, Mail, Phone, MapPin, Shield, 
   Package, Clock, CreditCard, LogOut,
-  Edit, Save, X
+  Edit, Save, X, ShoppingCart
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/lib/api/auth';
+import { orderApi } from '@/lib/api/order';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -27,9 +30,16 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, setUser } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch user orders for stats
+  const { data: ordersData } = useQuery({
+    queryKey: ['orders'],
+    queryFn: () => orderApi.getUserOrders(),
+    enabled: !!user,
+  });
 
   const {
     register,
@@ -56,17 +66,18 @@ export default function ProfilePage() {
   const onSubmit = async (data: ProfileFormData) => {
     setIsLoading(true);
     try {
-      // In a real app, you would call an API to update the user profile
-      // For now, we'll just simulate it
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update user profile (In a real app, you would call an API)
+      // Since we don't have a dedicated update profile API, we'll update the store
+      const updatedUser = {
+        ...user,
+        ...data,
+      };
       
-      // Update the user in the store
-      if (user) {
-        useAuthStore.getState().setUser({
-          ...user,
-          ...data,
-        });
-      }
+      // Update in store
+      setUser(updatedUser);
+      
+      // Update in localStorage
+      localStorage.setItem('medistore_user', JSON.stringify(updatedUser));
       
       toast.success('Profile updated successfully!');
       setIsEditing(false);
@@ -83,19 +94,33 @@ export default function ProfilePage() {
     router.push('/login');
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading profile..." />
-      </div>
-    );
-  }
-
+  // Calculate stats from real data
+  const orders = ordersData?.data || [];
   const stats = [
-    { label: 'Total Orders', value: '12', icon: Package, color: 'blue' },
-    { label: 'Pending Orders', value: '2', icon: Clock, color: 'yellow' },
-    { label: 'Delivered Orders', value: '10', icon: Shield, color: 'green' },
-    { label: 'Total Spent', value: '৳2,450', icon: CreditCard, color: 'purple' },
+    { 
+      label: 'Total Orders', 
+      value: orders.length, 
+      icon: Package, 
+      color: 'blue' 
+    },
+    { 
+      label: 'Pending Orders', 
+      value: orders.filter(o => ['PLACED', 'PROCESSING', 'SHIPPED'].includes(o.status)).length, 
+      icon: Clock, 
+      color: 'yellow' 
+    },
+    { 
+      label: 'Delivered Orders', 
+      value: orders.filter(o => o.status === 'DELIVERED').length, 
+      icon: Shield, 
+      color: 'green' 
+    },
+    { 
+      label: 'Total Spent', 
+      value: `৳${orders.reduce((sum, order) => sum + order.totalAmount, 0).toLocaleString()}`,
+      icon: CreditCard, 
+      color: 'purple' 
+    },
   ];
 
   const getColorClasses = (color: string) => {
@@ -107,6 +132,14 @@ export default function ProfilePage() {
       default: return 'bg-gray-50 text-gray-600';
     }
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading profile..." />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -190,7 +223,8 @@ export default function ProfilePage() {
                         <input
                           type="email"
                           {...register('email')}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          disabled
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 ${
                             errors.email ? 'border-red-500' : 'border-gray-300'
                           }`}
                         />
@@ -253,7 +287,7 @@ export default function ProfilePage() {
                       onClick={handleEditToggle}
                     >
                       Cancel
-                    </Button>
+                  </Button>
                     <Button
                       type="submit"
                       loading={isLoading}
@@ -290,18 +324,20 @@ export default function ProfilePage() {
               <h2 className="text-xl font-bold text-gray-900 mb-6">Account Actions</h2>
 
               <div className="space-y-4">
-                <button className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-4">
-                      <Package className="h-5 w-5 text-blue-600" />
+                <Link href="/orders" className="block">
+                  <div className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-4">
+                        <ShoppingCart className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-gray-900">My Orders</p>
+                        <p className="text-sm text-gray-500">View all orders</p>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="font-medium text-gray-900">My Orders</p>
-                      <p className="text-sm text-gray-500">View all orders</p>
-                    </div>
+                    <span className="text-gray-400">→</span>
                   </div>
-                  <span className="text-gray-400">→</span>
-                </button>
+                </Link>
 
                 <button className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50">
                   <div className="flex items-center">

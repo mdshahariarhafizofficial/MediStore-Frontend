@@ -10,11 +10,7 @@ export interface User {
   role: Role;
   isActive: boolean;
   createdAt: string;
-  _count?: {
-    medicines?: number;
-    orders?: number;
-    reviews?: number;
-  };
+  updatedAt?: string;
 }
 
 export interface Category {

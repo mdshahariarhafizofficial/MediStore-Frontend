@@ -11,7 +11,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-// import Modal from '@/components/ui/Modal';
+import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/store/auth.store';
 import { adminApi } from '@/lib/api/admin';
@@ -265,7 +265,7 @@ export default function AdminCategoriesPage() {
         )}
 
         {/* Add Category Modal */}
-        {/* <Modal
+        <Modal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           title="Add New Category"
@@ -315,10 +315,10 @@ export default function AdminCategoriesPage() {
               </div>
             </div>
           </form>
-        </Modal> */}
+        </Modal>
 
         {/* Edit Category Modal */}
-        {/* <Modal
+        <Modal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           title="Edit Category"
@@ -370,10 +370,10 @@ export default function AdminCategoriesPage() {
               </div>
             </form>
           )}
-        </Modal> */}
+        </Modal>
 
         {/* Delete Confirmation Modal */}
-        {/* <Modal
+        <Modal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
           title="Delete Category"
@@ -423,7 +423,7 @@ export default function AdminCategoriesPage() {
               </div>
             </div>
           )}
-        </Modal> */}
+        </Modal>
       </div>
     </div>
   );

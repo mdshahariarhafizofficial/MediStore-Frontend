@@ -11,7 +11,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-// import Modal from '@/components/ui/Modal';
+import Modal from '@/components/ui/Modal';
 import { useAuthStore } from '@/store/auth.store';
 import { adminApi } from '@/lib/api/admin';
 
@@ -299,7 +299,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Status Update Modal */}
-        {/* <Modal
+        <Modal
           isOpen={isStatusModalOpen}
           onClose={() => setIsStatusModalOpen(false)}
           title={selectedUser?.isActive ? "Deactivate User" : "Activate User"}
@@ -351,7 +351,7 @@ export default function AdminUsersPage() {
               </div>
             </div>
           )}
-        </Modal> */}
+        </Modal>
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { authApi } from '@/lib/api/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,19 +16,52 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
 }) => {
   const router = useRouter();
-  const { isAuthenticated, user, isLoading } = useAuthStore();
+  const pathname = usePathname();
+  const { isAuthenticated, user, isLoading, setUser, setToken } = useAuthStore();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    if (!isLoading) {
+    const checkAuth = async () => {
+      setIsCheckingAuth(true);
+      const token = localStorage.getItem('medistore_token');
+      const userStr = localStorage.getItem('medistore_user');
+      
+      if (token && userStr) {
+        try {
+          const response = await authApi.getCurrentUser();
+          if (response.success) {
+            setUser(response.data);
+            setToken(token);
+          } else {
+            localStorage.removeItem('medistore_token');
+            localStorage.removeItem('medistore_user');
+            router.push('/login');
+          }
+        } catch (error) {
+          localStorage.removeItem('medistore_token');
+          localStorage.removeItem('medistore_user');
+          router.push('/login');
+        }
+      } else if (!token && !userStr) {
+        router.push('/login');
+      }
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [pathname, setUser, setToken, router]);
+
+  useEffect(() => {
+    if (!isCheckingAuth && !isLoading) {
       if (!isAuthenticated) {
         router.push('/login');
       } else if (requiredRole && user?.role !== requiredRole) {
         router.push('/');
       }
     }
-  }, [isAuthenticated, user, requiredRole, isLoading, router]);
+  }, [isAuthenticated, user, requiredRole, isLoading, isCheckingAuth, router]);
 
-  if (isLoading || !isAuthenticated || (requiredRole && user?.role !== requiredRole)) {
+  if (isCheckingAuth || isLoading || !isAuthenticated || (requiredRole && user?.role !== requiredRole)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" text="Checking authentication..." />

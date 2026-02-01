@@ -224,7 +224,7 @@ export default function SellerDashboardPage() {
                   </div>
                 </div>
                 <Link href="/seller/medicines">
-                  <Button className="w-full mt-4 bg-white text-blue-600 hover:bg-blue-50">
+                  <Button className="w-full mt-4 hover:text-white text-black bg-white hover:bg-blue-50">
                     Add Product
                   </Button>
                 </Link>
@@ -239,7 +239,7 @@ export default function SellerDashboardPage() {
                   </div>
                 </div>
                 <Link href="#">
-                  <Button className="w-full mt-4 bg-white text-green-600 hover:bg-green-50">
+                  <Button className="w-full mt-4 text-black bg-white hover:text-white hover:bg-green-50">
                     View Analytics
                   </Button>
                 </Link>

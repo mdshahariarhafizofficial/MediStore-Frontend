@@ -366,13 +366,13 @@ export default function OrderDetailsPage() {
               </div>
 
               {/* Actions */}
-              {order.status === 'DELIVERED' && (
+              {/* {order.status === 'DELIVERED' && (
                 <div className="mt-6">
                   <Button variant="primary" className="w-full">
                     Write a Review
                   </Button>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </div>

@@ -264,7 +264,7 @@ export default function HomePage() {
           </div>
 
           {isLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="bg-gray-100 rounded-xl p-6 animate-pulse">
                   <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
@@ -274,7 +274,7 @@ export default function HomePage() {
               ))}
             </div>
           ) : featuredMedicines?.data?.medicines.length ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredMedicines.data.medicines.map((medicine) => (
                 <MedicineCard key={medicine.id} medicine={medicine} />
               ))}

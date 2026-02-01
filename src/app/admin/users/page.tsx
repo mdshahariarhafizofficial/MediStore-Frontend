@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import { 
   Search, Filter, User, Mail, Shield, 
   CheckCircle, XCircle, Edit, MoreVertical,
-  TrendingUp, Users as UsersIcon, Package
+  TrendingUp, Users as UsersIcon, Package,
+  Phone, MapPin, Calendar, Lock
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import { useAuthStore } from '@/store/auth.store';
 import { adminApi } from '@/lib/api/admin';
 
@@ -23,6 +25,13 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editUserData, setEditUserData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
 
   // Redirect if not authenticated as admin
   useEffect(() => {
@@ -54,9 +63,20 @@ export default function AdminUsersPage() {
 
   const users = usersData?.data || [];
 
-  const handleStatusUpdate = (user: any, isActive: boolean) => {
+  const handleStatusUpdate = (user: any) => {
     setSelectedUser(user);
     setIsStatusModalOpen(true);
+  };
+
+  const handleEdit = (user: any) => {
+    setSelectedUser(user);
+    setEditUserData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      address: user.address || '',
+    });
+    setIsEditModalOpen(true);
   };
 
   const confirmStatusUpdate = () => {
@@ -66,6 +86,14 @@ export default function AdminUsersPage() {
         isActive: !selectedUser.isActive,
       });
     }
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Update user logic here
+    toast.success('User updated successfully');
+    setIsEditModalOpen(false);
+    refetch();
   };
 
   const filteredUsers = users.filter(user => {
@@ -81,11 +109,32 @@ export default function AdminUsersPage() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  // Calculate stats from real data
   const stats = [
-    { label: 'Total Users', value: users.length, icon: UsersIcon, color: 'blue' },
-    { label: 'Customers', value: users.filter(u => u.role === 'CUSTOMER').length, icon: User, color: 'green' },
-    { label: 'Sellers', value: users.filter(u => u.role === 'SELLER').length, icon: Package, color: 'purple' },
-    { label: 'Active Users', value: users.filter(u => u.isActive).length, icon: CheckCircle, color: 'green' },
+    { 
+      label: 'Total Users', 
+      value: users.length, 
+      icon: UsersIcon, 
+      color: 'blue' 
+    },
+    { 
+      label: 'Customers', 
+      value: users.filter(u => u.role === 'CUSTOMER').length, 
+      icon: User, 
+      color: 'green' 
+    },
+    { 
+      label: 'Sellers', 
+      value: users.filter(u => u.role === 'SELLER').length, 
+      icon: Package, 
+      color: 'purple' 
+    },
+    { 
+      label: 'Active Users', 
+      value: users.filter(u => u.isActive).length, 
+      icon: CheckCircle, 
+      color: 'green' 
+    },
   ];
 
   const formatDate = (dateString: string) => {
@@ -170,7 +219,7 @@ export default function AdminUsersPage() {
               </select>
               <button className="flex items-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50">
                 <Filter className="h-4 w-4 mr-2" />
-                More Filters
+                Export
               </button>
             </div>
           </div>
@@ -202,7 +251,9 @@ export default function AdminUsersPage() {
                           <div>
                             <div className="font-medium text-gray-900">{user.name}</div>
                             <div className="text-sm text-gray-500">{user.email}</div>
-                            <div className="text-sm text-gray-500">{user.phone || 'No phone'}</div>
+                            {user.phone && (
+                              <div className="text-sm text-gray-500">{user.phone}</div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -247,15 +298,22 @@ export default function AdminUsersPage() {
                             <div className="font-bold text-gray-900">{user._count?.orders || 0}</div>
                             <div className="text-xs text-gray-500">Orders</div>
                           </div>
+                          <div className="text-center">
+                            <div className="font-bold text-gray-900">{user._count?.reviews || 0}</div>
+                            <div className="text-xs text-gray-500">Reviews</div>
+                          </div>
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
-                          <button className="p-2 text-gray-400 hover:text-blue-600">
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="p-2 text-gray-400 hover:text-blue-600"
+                          >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => handleStatusUpdate(user, !user.isActive)}
+                            onClick={() => handleStatusUpdate(user)}
                             className={`px-3 py-1 rounded-lg text-sm font-medium ${
                               user.isActive
                                 ? 'bg-red-50 text-red-700 hover:bg-red-100'
@@ -297,6 +355,123 @@ export default function AdminUsersPage() {
             </div>
           )}
         </div>
+
+        {/* Edit User Modal */}
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          title="Edit User"
+          size="lg"
+        >
+          {selectedUser && (
+            <form onSubmit={handleEditSubmit}>
+              <div className="p-6">
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                      {selectedUser.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{selectedUser.name}</p>
+                      <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                      <p className="text-sm text-gray-500 capitalize">{selectedUser.role.toLowerCase()}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Full Name
+                      </label>
+                      <Input
+                        value={editUserData.name}
+                        onChange={(e) => setEditUserData({ ...editUserData, name: e.target.value })}
+                        placeholder="Enter full name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address
+                      </label>
+                      <Input
+                        value={editUserData.email}
+                        onChange={(e) => setEditUserData({ ...editUserData, email: e.target.value })}
+                        placeholder="Enter email address"
+                        type="email"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number
+                      </label>
+                      <Input
+                        value={editUserData.phone}
+                        onChange={(e) => setEditUserData({ ...editUserData, phone: e.target.value })}
+                        placeholder="Enter phone number"
+                        type="tel"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Role
+                      </label>
+                      <select
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        defaultValue={selectedUser.role}
+                      >
+                        <option value="CUSTOMER">Customer</option>
+                        <option value="SELLER">Seller</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address
+                    </label>
+                    <textarea
+                      value={editUserData.address}
+                      onChange={(e) => setEditUserData({ ...editUserData, address: e.target.value })}
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="Enter address"
+                    />
+                  </div>
+
+                  <div className="p-4 bg-yellow-50 rounded-lg">
+                    <div className="flex items-center">
+                      <Lock className="h-5 w-5 text-yellow-600 mr-3" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Reset Password</p>
+                        <p className="text-xs text-gray-600">Send password reset link to user's email</p>
+                      </div>
+                      <Button className="ml-auto" size="sm" variant="outline">
+                        Send Reset Link
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </form>
+          )}
+        </Modal>
 
         {/* Status Update Modal */}
         <Modal

@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import { 
   Search, Filter, Eye, Truck, CheckCircle, 
   Clock, Package, XCircle, MoreVertical,
-  TrendingUp, DollarSign, Users
+  TrendingUp, DollarSign, Users, AlertCircle
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Modal from '@/components/ui/Modal';
 import { useAuthStore } from '@/store/auth.store';
 import { sellerApi } from '@/lib/api/seller';
 
@@ -53,7 +54,7 @@ export default function SellerOrdersPage() {
 
   const orders = ordersData?.data || [];
 
-  const handleUpdateStatus = (order: any, status: string) => {
+  const handleStatusUpdate = (order: any, status: string) => {
     setSelectedOrder(order);
     setSelectedStatus(status);
     setIsStatusModalOpen(true);
@@ -78,11 +79,32 @@ export default function SellerOrdersPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // Calculate stats from real data
   const stats = [
-    { label: 'Total Orders', value: orders.length, icon: Package, color: 'blue' },
-    { label: 'Processing', value: orders.filter(o => o.status === 'PROCESSING').length, icon: Clock, color: 'yellow' },
-    { label: 'Shipped', value: orders.filter(o => o.status === 'SHIPPED').length, icon: Truck, color: 'purple' },
-    { label: 'Delivered', value: orders.filter(o => o.status === 'DELIVERED').length, icon: CheckCircle, color: 'green' },
+    { 
+      label: 'Total Orders', 
+      value: orders.length, 
+      icon: Package, 
+      color: 'blue' 
+    },
+    { 
+      label: 'Processing', 
+      value: orders.filter(o => o.status === 'PROCESSING').length, 
+      icon: Clock, 
+      color: 'yellow' 
+    },
+    { 
+      label: 'Shipped', 
+      value: orders.filter(o => o.status === 'SHIPPED').length, 
+      icon: Truck, 
+      color: 'purple' 
+    },
+    { 
+      label: 'Delivered', 
+      value: orders.filter(o => o.status === 'DELIVERED').length, 
+      icon: CheckCircle, 
+      color: 'green' 
+    },
   ];
 
   const getStatusColor = (status: string) => {
@@ -121,6 +143,16 @@ export default function SellerOrdersPage() {
       currency: 'BDT',
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  // Get next status for order
+  const getNextStatus = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'PLACED': return 'PROCESSING';
+      case 'PROCESSING': return 'SHIPPED';
+      case 'SHIPPED': return 'DELIVERED';
+      default: return null;
+    }
   };
 
   if (isLoading) {
@@ -216,6 +248,7 @@ export default function SellerOrdersPage() {
                   {filteredOrders.map((order) => {
                     const StatusIcon = getStatusIcon(order.status);
                     const statusColor = getStatusColor(order.status);
+                    const nextStatus = getNextStatus(order.status);
                     
                     return (
                       <tr key={order.id} className="hover:bg-gray-50">
@@ -249,41 +282,28 @@ export default function SellerOrdersPage() {
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-2">
-                            <button className="p-2 text-gray-400 hover:text-blue-600">
+                            {/* <button 
+                              onClick={() => router.push(`/orders/${order.id}`)}
+                              className="p-2 text-gray-400 hover:text-blue-600"
+                            >
                               <Eye className="h-4 w-4" />
-                            </button>
+                            </button> */}
                             
-                            {/* Status Update Buttons */}
-                            {order.status === 'PLACED' && (
+                            {/* Status Update Button */}
+                            {nextStatus && (
                               <button
-                                onClick={() => handleUpdateStatus(order, 'PROCESSING')}
-                                className="px-3 py-1 bg-yellow-50 text-yellow-700 rounded-lg text-sm font-medium hover:bg-yellow-100"
+                                onClick={() => handleStatusUpdate(order, nextStatus)}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                                  nextStatus === 'PROCESSING' ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' :
+                                  nextStatus === 'SHIPPED' ? 'bg-purple-50 text-purple-700 hover:bg-purple-100' :
+                                  'bg-green-50 text-green-700 hover:bg-green-100'
+                                }`}
                               >
-                                Start Processing
+                                {nextStatus === 'PROCESSING' ? 'Start Processing' :
+                                 nextStatus === 'SHIPPED' ? 'Mark as Shipped' :
+                                 'Mark as Delivered'}
                               </button>
                             )}
-                            
-                            {order.status === 'PROCESSING' && (
-                              <button
-                                onClick={() => handleUpdateStatus(order, 'SHIPPED')}
-                                className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100"
-                              >
-                                Mark as Shipped
-                              </button>
-                            )}
-                            
-                            {order.status === 'SHIPPED' && (
-                              <button
-                                onClick={() => handleUpdateStatus(order, 'DELIVERED')}
-                                className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100"
-                              >
-                                Mark as Delivered
-                              </button>
-                            )}
-                            
-                            <button className="p-2 text-gray-400 hover:text-gray-600">
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -313,34 +333,50 @@ export default function SellerOrdersPage() {
         </div>
 
         {/* Status Update Modal */}
-        {isStatusModalOpen && selectedOrder && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-md w-full">
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Update Order Status</h3>
-                <p className="text-gray-600 mb-6">
-                  Update order #{selectedOrder.orderNumber} from{' '}
-                  <span className="font-medium">{selectedOrder.status}</span> to{' '}
-                  <span className="font-medium">{selectedStatus}</span>
-                </p>
-                
-                <div className="space-y-4 mb-6">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-1">Customer</p>
-                    <p className="font-medium">{selectedOrder.customer?.name}</p>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-1">Order Total</p>
-                    <p className="font-medium">{formatPrice(selectedOrder.totalAmount)}</p>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-1">Items</p>
-                    <p className="font-medium">{selectedOrder.items.length} items</p>
+        <Modal
+          isOpen={isStatusModalOpen}
+          onClose={() => setIsStatusModalOpen(false)}
+          title="Update Order Status"
+          size="md"
+        >
+          {selectedOrder && (
+            <div className="p-6">
+              <div className="space-y-6">
+                <div className="text-center">
+                  <AlertCircle className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Update Order Status
+                  </h3>
+                  <p className="text-gray-600">
+                    Update order #{selectedOrder.orderNumber} from{' '}
+                    <span className="font-medium">{selectedOrder.status}</span> to{' '}
+                    <span className="font-medium">{selectedStatus}</span>
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Customer:</span>
+                      <span className="font-medium">{selectedOrder.customer?.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Order Total:</span>
+                      <span className="font-medium">{formatPrice(selectedOrder.totalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Items:</span>
+                      <span className="font-medium">{selectedOrder.items.length} items</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Current Status:</span>
+                      <span className={`font-medium ${getStatusColor(selectedOrder.status)} px-2 py-1 rounded`}>
+                        {selectedOrder.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-end space-x-3">
                   <Button
                     variant="outline"
@@ -357,8 +393,8 @@ export default function SellerOrdersPage() {
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </Modal>
       </div>
     </div>
   );

@@ -41,7 +41,7 @@ export default function CheckoutPage() {
   }, [items, router]);
 
   // Fetch cart items
-  const { data: cartData, isLoading } = useQuery({
+  const { data: cartData, isLoading, refetch: refetchCart } = useQuery({
     queryKey: ['cart'],
     queryFn: () => cartApi.getCartItems(),
   });
@@ -76,7 +76,13 @@ export default function CheckoutPage() {
       }),
     onSuccess: (response) => {
       if (response.success) {
+        // Clear cart from store
         clearCart();
+        // Clear cart from backend
+        cartApi.clearCart().then(() => {
+          refetchCart();
+        });
+        
         toast.success('Order placed successfully!');
         router.push(`/orders/${response.data.id}`);
       }

@@ -1,25 +1,25 @@
 import axiosInstance from './axios';
-import { Medicine, Category, PaginatedResponse, ApiResponse } from '@/lib/types';
+import { ApiResponse, Medicine, Category, PaginatedResponse } from '@/lib/types';
 
 export const medicineApi = {
-  getAllMedicines: (params?: {
-    page?: number;
-    limit?: number;
+  getAllMedicines: async (params?: {
+    page?: string;
+    limit?: string;
     category?: string;
     search?: string;
-    minPrice?: number;
-    maxPrice?: number;
+    minPrice?: string;
+    maxPrice?: string;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: string;
   }): Promise<ApiResponse<PaginatedResponse<Medicine>>> => {
     return axiosInstance.get('/medicines', { params });
   },
 
-  getMedicineById: (id: string): Promise<ApiResponse<Medicine>> => {
+  getMedicineById: async (id: string): Promise<ApiResponse<Medicine>> => {
     return axiosInstance.get(`/medicines/${id}`);
   },
 
-  getCategories: (): Promise<ApiResponse<Category[]>> => {
+  getCategories: async (): Promise<ApiResponse<Category[]>> => {
     return axiosInstance.get('/medicines/categories');
   },
 };

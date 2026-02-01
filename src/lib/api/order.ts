@@ -1,8 +1,8 @@
 import axiosInstance from './axios';
-import { Order, ApiResponse } from '@/lib/types';
+import { ApiResponse, Order } from '@/lib/types';
 
 export const orderApi = {
-  createOrder: (data: {
+  createOrder: async (data: {
     items: Array<{ medicineId: string; quantity: number }>;
     shippingAddress: string;
     phone: string;
@@ -10,15 +10,15 @@ export const orderApi = {
     return axiosInstance.post('/orders', data);
   },
 
-  getOrders: (): Promise<ApiResponse<Order[]>> => {
+  getUserOrders: async (): Promise<ApiResponse<Order[]>> => {
     return axiosInstance.get('/orders');
   },
 
-  getOrderById: (id: string): Promise<ApiResponse<Order>> => {
+  getOrderById: async (id: string): Promise<ApiResponse<Order>> => {
     return axiosInstance.get(`/orders/${id}`);
   },
 
-  addReview: (medicineId: string, data: { rating: number; comment?: string }): Promise<ApiResponse> => {
+  addReview: async (medicineId: string, data: { rating: number; comment?: string }): Promise<ApiResponse> => {
     return axiosInstance.post(`/orders/${medicineId}/review`, data);
   },
 };

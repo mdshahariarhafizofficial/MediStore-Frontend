@@ -1,9 +1,9 @@
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { ReactNode } from 'react';
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default function SellerLayout({ children }: { children: ReactNode }) {
   return (
-    <ProtectedRoute requiredRole="ADMIN">
+    <ProtectedRoute requiredRole="SELLER">
       {children}
     </ProtectedRoute>
   );

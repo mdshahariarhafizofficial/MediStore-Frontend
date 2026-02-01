@@ -1,14 +1,9 @@
-'use client';
-
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { ReactNode } from 'react';
 
-export default function CustomerLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function CustomerLayout({ children }: { children: ReactNode }) {
   return (
-    <ProtectedRoute roles={['CUSTOMER']}>
+    <ProtectedRoute requiredRole="CUSTOMER">
       {children}
     </ProtectedRoute>
   );

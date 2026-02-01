@@ -1,31 +1,36 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  roles?: ('CUSTOMER' | 'SELLER' | 'ADMIN')[];
+  requiredRole?: 'CUSTOMER' | 'SELLER' | 'ADMIN';
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredRole,
+}) => {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, isLoading } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    } else if (roles && !roles.includes(user?.role!)) {
-      router.push('/');
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.push('/login');
+      } else if (requiredRole && user?.role !== requiredRole) {
+        router.push('/');
+      }
     }
-  }, [isAuthenticated, user, roles, router]);
+  }, [isAuthenticated, user, requiredRole, isLoading, router]);
 
-  if (!isAuthenticated || (roles && !roles.includes(user?.role!))) {
+  if (isLoading || !isAuthenticated || (requiredRole && user?.role !== requiredRole)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner size="lg" text="Checking authentication..." />
       </div>
     );
   }

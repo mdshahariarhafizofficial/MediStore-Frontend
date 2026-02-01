@@ -6,10 +6,12 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   login: (user: User, token: string) => void;
   logout: () => void;
+  setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -18,22 +20,23 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      isLoading: false,
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setToken: (token) => set({ token }),
       login: (user, token) => {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('medistore_token', token);
+        localStorage.setItem('medistore_user', JSON.stringify(user));
         set({ user, token, isAuthenticated: true });
       },
       logout: () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('medistore_token');
+        localStorage.removeItem('medistore_user');
         set({ user: null, token: null, isAuthenticated: false });
-        window.location.href = '/login';
       },
+      setLoading: (loading) => set({ isLoading: loading }),
     }),
     {
-      name: 'auth-storage',
+      name: 'medistore-auth',
     }
   )
 );

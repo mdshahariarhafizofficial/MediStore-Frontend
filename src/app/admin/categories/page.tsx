@@ -26,6 +26,11 @@ export default function AdminCategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<any>(null);
 
+  const handleViewProducts = (categoryId: string) => {
+    router.push(`/shop?category=${categoryId}`);
+  };
+
+
   // Redirect if not authenticated as admin
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'ADMIN') {
@@ -236,7 +241,9 @@ export default function AdminCategoriesPage() {
                   <div className="text-sm text-gray-500">
                     Created {new Date(category.createdAt).toLocaleDateString()}
                   </div>
-                  <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                  <button
+                    onClick={() => handleViewProducts(category.id)}
+                    className="text-primary-600 hover:text-primary-700 text-sm font-medium">
                     View Products →
                   </button>
                 </div>

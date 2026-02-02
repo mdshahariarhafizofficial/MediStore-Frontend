@@ -10,6 +10,23 @@ export const adminApi = {
     return axiosInstance.patch(`/admin/users/${id}/status`, data);
   },
 
+    updateUser: async (id: string, data: {
+    name?: string;
+    phone?: string;
+    address?: string;
+    role?: 'CUSTOMER' | 'SELLER';
+  }): Promise<ApiResponse<User>> => {
+    return axiosInstance.put(`/admin/users/${id}`, data);
+  },
+
+  deleteUser: async (id: string): Promise<ApiResponse> => {
+    return axiosInstance.delete(`/admin/users/${id}`);
+  },
+
+  resetPassword: async (id: string, newPassword: string): Promise<ApiResponse> => {
+    return axiosInstance.post(`/admin/users/${id}/reset-password`, { newPassword });
+  },
+
   getOrders: async (): Promise<ApiResponse<Order[]>> => {
     return axiosInstance.get('/admin/orders');
   },

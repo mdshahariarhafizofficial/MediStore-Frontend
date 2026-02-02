@@ -22,8 +22,7 @@ export const orderApi = {
     return axiosInstance.post(`/orders/${medicineId}/review`, data);
   },
 
-  cancelOrder: async (orderId: string): Promise<ApiResponse<Order>> => {
-    const response = await axiosInstance.put(`/orders/${orderId}/cancel`);
-    return response.data;
-  }
+cancelOrder: async (orderId: string): Promise<ApiResponse<Order>> => {
+  return axiosInstance.patch(`/orders/${orderId}/cancel`);
+},
 };

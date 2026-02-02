@@ -73,6 +73,50 @@ const Navbar: React.FC = () => {
 
   const links = getRoleLinks();
 
+  // User avatar with photo URL
+  const renderUserAvatar = () => {
+    if (user?.photoUrl) {
+      return (
+        <div 
+          className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-100"
+          style={{
+            backgroundImage: `url('${user.photoUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        />
+      );
+    } else {
+      return (
+        <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+          {user?.name?.charAt(0).toUpperCase()}
+        </div>
+      );
+    }
+  };
+
+  // Mobile user avatar
+  const renderMobileUserAvatar = () => {
+    if (user?.photoUrl) {
+      return (
+        <div 
+          className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-md"
+          style={{
+            backgroundImage: `url('${user.photoUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        />
+      );
+    } else {
+      return (
+        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+          {user?.name?.charAt(0).toUpperCase()}
+        </div>
+      );
+    }
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -126,9 +170,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </div>
+                    {renderUserAvatar()}
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900">{user?.name}</p>
                       <p className="text-xs text-gray-500 capitalize">{user?.role?.toLowerCase()}</p>
@@ -142,14 +184,25 @@ const Navbar: React.FC = () => {
                         className="fixed inset-0 z-40" 
                         onClick={() => setUserMenuOpen(false)}
                       />
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50 animate-fade-in">
-                        <div className="px-4 py-2 border-b border-gray-100">
-                          <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                          <p className="text-xs text-gray-500">{user?.email}</p>
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50 animate-fade-in">
+                        <div className="px-4 py-3 border-b border-gray-100 flex items-center space-x-3">
+                          {renderUserAvatar()}
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                            <p className="text-xs text-gray-500">{user?.email}</p>
+                          </div>
                         </div>
+                        {/* <Link
+                          href="/profile"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <User className="h-4 w-4" />
+                          <span>Profile</span>
+                        </Link> */}
                         <button
                           onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                          className="w-full text-left px-6 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
                         >
                           <LogOut className="h-4 w-4" />
                           <span>Sign out</span>
@@ -215,10 +268,21 @@ const Navbar: React.FC = () => {
 
               {isAuthenticated ? (
                 <div className="pt-4 border-t border-gray-200">
-                  <div className="px-4 py-3">
-                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                    <p className="text-sm text-gray-500">{user?.email}</p>
+                  <div className="px-4 py-3 flex items-center space-x-3">
+                    {renderMobileUserAvatar()}
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                      <p className="text-sm text-gray-500">{user?.email}</p>
+                    </div>
                   </div>
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"
+                  >
+                    <User className="h-5 w-5" />
+                    <span>Profile</span>
+                  </Link>
                   <button
                     onClick={() => {
                       handleLogout();

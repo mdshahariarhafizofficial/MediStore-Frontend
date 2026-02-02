@@ -7,6 +7,7 @@ export interface User {
   name: string;
   phone?: string;
   address?: string;
+  photoUrl?: string;
   role: Role;
   isActive: boolean;
   createdAt: string;

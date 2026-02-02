@@ -26,4 +26,13 @@ export const authApi = {
     localStorage.removeItem('medistore_user');
     window.location.href = '/login';
   },
+
+  updateProfile: async (data: {
+    name?: string;
+    phone?: string;
+    address?: string;
+    photoUrl?: string;
+  }): Promise<ApiResponse<User>> => {
+    return axiosInstance.put('/auth/profile', data);
+  },
 };

@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   User, Mail, Phone, MapPin, Shield, 
   Package, Clock, CreditCard, LogOut,
-  Edit, Save, X, ShoppingCart
+  Edit, Save, X, ShoppingCart, Image as ImageIcon, Link as LinkIcon
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -24,15 +24,17 @@ const profileSchema = z.object({
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
   address: z.string().optional(),
+  photoUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, logout, setUser } = useAuthStore();
+  const { user, setUser, logout } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
 
   // Fetch user orders for stats
   const { data: ordersData } = useQuery({
@@ -45,6 +47,8 @@ export default function ProfilePage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -53,36 +57,90 @@ export default function ProfilePage() {
       email: user?.email || '',
       phone: user?.phone || '',
       address: user?.address || '',
+      photoUrl: user?.photoUrl || '',
     },
   });
 
+  // Watch photoUrl field for preview
+  const photoUrlValue = watch('photoUrl');
+
+  // Update form when user changes
+  useEffect(() => {
+    if (user) {
+      reset({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        photoUrl: user.photoUrl || '',
+      });
+    }
+  }, [user, reset]);
+
   const handleEditToggle = () => {
     if (isEditing) {
-      reset();
+      reset({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        address: user?.address || '',
+        photoUrl: user?.photoUrl || '',
+      });
+      setShowPhotoPreview(false);
     }
     setIsEditing(!isEditing);
   };
 
   const onSubmit = async (data: ProfileFormData) => {
     setIsLoading(true);
+    
     try {
-      // Update user profile (In a real app, you would call an API)
-      // Since we don't have a dedicated update profile API, we'll update the store
-      const updatedUser = {
-        ...user,
-        ...data,
+      // Prepare payload
+      const payload = {
+        name: data.name,
+        phone: data.phone || null,
+        address: data.address || null,
+        photoUrl: data.photoUrl || null,
       };
-      
-      // Update in store
-      setUser(updatedUser);
-      
-      // Update in localStorage
-      localStorage.setItem('medistore_user', JSON.stringify(updatedUser));
-      
-      toast.success('Profile updated successfully!');
-      setIsEditing(false);
-    } catch (error) {
-      toast.error('Failed to update profile');
+
+      // Call the API
+      const response = await authApi.updateProfile(payload);
+
+      if (response.success && response.data) {
+        // Method 1: Direct localStorage update
+        const currentStoredUser = JSON.parse(localStorage.getItem('medistore_user') || '{}');
+        const updatedUser = {
+          ...currentStoredUser,
+          ...response.data,
+          photoUrl: response.data.photoUrl
+        };
+        
+        // Save to localStorage FIRST
+        localStorage.setItem('medistore_user', JSON.stringify(updatedUser));
+        
+        // Then update the store
+        setUser(updatedUser);
+        
+        // Force a re-render by updating the form
+        reset({
+          name: response.data.name,
+          email: response.data.email,
+          phone: response.data.phone || '',
+          address: response.data.address || '',
+          photoUrl: response.data.photoUrl || '',
+        });
+
+        toast.success('Profile updated successfully!');
+        setIsEditing(false);
+        setShowPhotoPreview(false);
+        
+        // Force reload after 500ms to ensure state is updated
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +191,14 @@ export default function ProfilePage() {
     }
   };
 
+  const clearProfilePhoto = () => {
+    setValue('photoUrl', '');
+  };
+
+  const togglePhotoPreview = () => {
+    setShowPhotoPreview(!showPhotoPreview);
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -157,20 +223,45 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center space-x-4">
-                  <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
-                    {user.name.charAt(0).toUpperCase()}
+                  {/* Profile Photo - FIXED VERSION */}
+                  <div className="relative">
+                    <div 
+                      className="w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-gray-200"
+                      style={{
+                        backgroundImage: user?.photoUrl ? `url('${user.photoUrl}')` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundColor: user?.photoUrl ? 'transparent' : '#3b82f6'
+                      }}
+                    >
+                      {!user?.photoUrl && (
+                        <span className="text-white text-4xl font-bold">
+                          {user?.name?.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    {isEditing && photoUrlValue && showPhotoPreview && (
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                        Preview
+                      </div>
+                    )}
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
                     <p className="text-gray-600">{user.email}</p>
                     <span className="inline-block mt-2 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm font-medium capitalize">
-                      {user.role.toLowerCase()}
+                      {user.role?.toLowerCase()}
                     </span>
+                    <div className="mt-1">
+                      <p className="text-xs text-gray-500">
+                        Photo URL: {user?.photoUrl ? '✓ Set' : '✗ Not set'}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <button
                   onClick={handleEditToggle}
-                  className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   {isEditing ? (
                     <>
@@ -248,7 +339,10 @@ export default function ProfilePage() {
                       <input
                         type="tel"
                         {...register('phone')}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="+8801234567890"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          errors.phone ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       />
                     ) : (
                       <div className="flex items-center p-3 bg-gray-50 rounded-lg">
@@ -266,7 +360,10 @@ export default function ProfilePage() {
                       <textarea
                         {...register('address')}
                         rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Enter your full address"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          errors.address ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       />
                     ) : (
                       <div className="flex items-start p-3 bg-gray-50 rounded-lg">
@@ -277,20 +374,121 @@ export default function ProfilePage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Photo URL Field - Full width */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Profile Photo URL
+                      <span className="text-gray-500 text-sm font-normal ml-2">
+                        (Optional - Enter a direct image link)
+                      </span>
+                    </label>
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <div className="flex">
+                              <div className="flex items-center px-4 py-3 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50">
+                                <LinkIcon className="h-5 w-5 text-gray-400" />
+                              </div>
+                              <input
+                                type="url"
+                                placeholder="https://i.pravatar.cc/300"
+                                {...register('photoUrl')}
+                                className={`flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                                  errors.photoUrl ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              />
+                            </div>
+                            {errors.photoUrl && (
+                              <p className="mt-2 text-sm text-red-600">{errors.photoUrl.message}</p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-1">
+                              Enter a valid image URL (e.g., https://i.pravatar.cc/300)
+                            </p>
+                          </div>
+                          {photoUrlValue && (
+                            <button
+                              type="button"
+                              onClick={togglePhotoPreview}
+                              className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              {showPhotoPreview ? 'Hide' : 'Show'} Preview
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <ImageIcon className="h-4 w-4" />
+                            <span>Test with: https://i.pravatar.cc/300</span>
+                          </div>
+                          {photoUrlValue && (
+                            <button
+                              type="button"
+                              onClick={clearProfilePhoto}
+                              className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+
+                        {showPhotoPreview && photoUrlValue && (
+                          <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                            <div className="flex items-center gap-4">
+                              <div 
+                                className="w-16 h-16 rounded-full bg-cover bg-center border-2 border-gray-300"
+                                style={{ backgroundImage: `url(${photoUrlValue})` }}
+                              />
+                              <div>
+                                <p className="text-sm text-gray-600">This will be your new profile photo</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                        <ImageIcon className="h-5 w-5 text-gray-400 mr-3" />
+                        <div className="flex-1">
+                          {user.photoUrl ? (
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="w-12 h-12 rounded-full bg-cover bg-center border border-gray-300"
+                                style={{ backgroundImage: `url(${user.photoUrl})` }}
+                              />
+                              <div>
+                                <p className="text-green-600 font-medium">Profile photo set</p>
+                                <p className="text-xs text-gray-500 truncate max-w-md">
+                                  {user.photoUrl}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-600">No profile photo set</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {isEditing && (
-                  <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 mt-8 pt-6 border-t border-gray-200">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleEditToggle}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
-                  </Button>
+                    </Button>
                     <Button
                       type="submit"
                       loading={isLoading}
+                      className="w-full sm:w-auto"
                     >
                       <Save className="h-4 w-4 mr-2" />
                       Save Changes
@@ -303,7 +501,7 @@ export default function ProfilePage() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {stats.map((stat, index) => (
-                <div key={index} className="bg-white rounded-xl p-6 shadow-sm">
+                <div key={index} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-500">{stat.label}</p>
@@ -325,7 +523,7 @@ export default function ProfilePage() {
 
               <div className="space-y-4">
                 <Link href="/orders" className="block">
-                  <div className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                  <div className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-4">
                         <ShoppingCart className="h-5 w-5 text-blue-600" />
@@ -339,7 +537,7 @@ export default function ProfilePage() {
                   </div>
                 </Link>
 
-                <button className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50">
+                <button className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center mr-4">
                       <Shield className="h-5 w-5 text-green-600" />
@@ -352,7 +550,7 @@ export default function ProfilePage() {
                   <span className="text-gray-400">→</span>
                 </button>
 
-                <button className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50">
+                <button className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mr-4">
                       <CreditCard className="h-5 w-5 text-purple-600" />
@@ -365,7 +563,7 @@ export default function ProfilePage() {
                   <span className="text-gray-400">→</span>
                 </button>
 
-                <button className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50">
+                <button className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center mr-4">
                       <Shield className="h-5 w-5 text-yellow-600" />
@@ -382,7 +580,7 @@ export default function ProfilePage() {
               {/* Logout Button */}
               <button
                 onClick={handleLogout}
-                className="w-full mt-8 flex items-center justify-center p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                className="w-full mt-8 flex items-center justify-center p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
               >
                 <LogOut className="h-5 w-5 mr-3" />
                 Sign Out
@@ -395,17 +593,27 @@ export default function ProfilePage() {
                   <div className="flex justify-between">
                     <span className="text-gray-500">Member since</span>
                     <span className="font-medium">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {new Date(user.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Account Type</span>
-                    <span className="font-medium capitalize">{user.role.toLowerCase()}</span>
+                    <span className="font-medium capitalize">{user.role?.toLowerCase()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Account Status</span>
                     <span className={`font-medium ${user.isActive ? 'text-green-600' : 'text-red-600'}`}>
                       {user.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Photo Status</span>
+                    <span className={`font-medium ${user.photoUrl ? 'text-green-600' : 'text-gray-600'}`}>
+                      {user.photoUrl ? '✓ Set' : '✗ Not set'}
                     </span>
                   </div>
                 </div>

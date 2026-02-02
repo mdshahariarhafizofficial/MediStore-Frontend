@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { 
   Package, CheckCircle, Clock, Truck, 
   XCircle, AlertCircle, Search, Filter,
-  Star, MessageSquare
+  Star, MessageSquare, AlertTriangle, RefreshCw,
+  ShoppingBag
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -19,12 +20,17 @@ import toast from 'react-hot-toast';
 
 export default function OrdersPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isAuthenticated, user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
   const [selectedMedicine, setSelectedMedicine] = useState<any>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -33,11 +39,22 @@ export default function OrdersPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  // Fetch orders
-  const { data: ordersData, isLoading, refetch } = useQuery({
-    queryKey: ['orders'],
+  // Fetch orders with proper configuration
+  const { 
+    data: ordersData, 
+    isLoading, 
+    refetch,
+    isRefetching,
+    isFetching
+  } = useQuery({
+    queryKey: ['orders', user?.id],
     queryFn: () => orderApi.getUserOrders(),
     enabled: isAuthenticated && user?.role === 'CUSTOMER',
+    staleTime: 0,
+    cacheTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
   const orders = ordersData?.data || [];
@@ -45,6 +62,50 @@ export default function OrdersPage() {
   const handleWriteReview = (medicine: any) => {
     setSelectedMedicine(medicine);
     setIsReviewModalOpen(true);
+  };
+
+  const handleCancelClick = (order: Order) => {
+    setOrderToCancel(order);
+    setIsCancelModalOpen(true);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!orderToCancel) return;
+
+    setIsCancelling(true);
+    try {
+      const response = await orderApi.cancelOrder(orderToCancel.id);
+      if (response.success) {
+        toast.success('✅ Order cancelled successfully!');
+        
+        // Immediately close modal first
+        setIsCancelModalOpen(false);
+        setOrderToCancel(null);
+        setIsCancelling(false);
+        
+        // Invalidate cache
+        queryClient.invalidateQueries(['orders', user?.id]);
+        
+        // Refetch data
+        await refetch();
+      }
+    } catch (error: any) {
+      console.error('Cancel error:', error);
+      toast.error(error.message || 'Failed to cancel order. Please try again.');
+      setIsCancelling(false);
+    }
+  };
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      toast.success('Orders refreshed!');
+    } catch (error) {
+      toast.error('Failed to refresh orders');
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const submitReview = async () => {
@@ -57,10 +118,12 @@ export default function OrdersPage() {
       });
 
       if (response.success) {
-        toast.success('Review submitted successfully!');
+        toast.success('✅ Review submitted successfully!');
         setIsReviewModalOpen(false);
         setReviewData({ rating: 5, comment: '' });
-        refetch();
+        // Invalidate cache and refetch
+        queryClient.invalidateQueries(['orders', user?.id]);
+        await refetch();
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to submit review');
@@ -138,10 +201,10 @@ export default function OrdersPage() {
       color: 'yellow' 
     },
     { 
-      label: 'Total Spent', 
-      value: formatPrice(orders.reduce((sum, order) => sum + order.totalAmount, 0)),
-      icon: Truck, 
-      color: 'purple' 
+      label: 'Cancelled', 
+      value: orders.filter(o => o.status === 'CANCELLED').length, 
+      icon: XCircle, 
+      color: 'red' 
     },
   ];
 
@@ -158,8 +221,29 @@ export default function OrdersPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
-          <p className="text-gray-600 mt-2">Track and manage all your orders</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
+              <p className="text-gray-600 mt-2">Track and manage all your orders</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {isFetching && (
+                <span className="text-sm text-gray-500 animate-pulse">
+                  Updating...
+                </span>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing || isFetching}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing || isFetching ? 'animate-spin' : ''}`} />
+                {isRefreshing || isFetching ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
@@ -204,6 +288,7 @@ export default function OrdersPage() {
               {filteredOrders.map((order: Order) => {
                 const StatusIcon = getStatusIcon(order.status);
                 const statusColor = getStatusColor(order.status);
+                const canCancel = order.status === 'PLACED' || order.status === 'PROCESSING';
                 
                 return (
                   <div key={order.id} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
@@ -222,6 +307,11 @@ export default function OrdersPage() {
                           </div>
                           <p className="text-gray-500 text-sm mt-1">
                             Placed on {formatDate(order.createdAt)}
+                            {order.updatedAt !== order.createdAt && (
+                              <span className="ml-2">
+                                • Updated: {formatDate(order.updatedAt)}
+                              </span>
+                            )}
                           </p>
                         </div>
                         <div className="text-right">
@@ -292,6 +382,19 @@ export default function OrdersPage() {
                           </p>
                         </div>
                         <div className="flex space-x-3">
+                          {/* শুধুমাত্র PLACED বা PROCESSING স্ট্যাটাসের অর্ডার ক্যান্সেল করা যাবে */}
+                          {canCancel && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={() => handleCancelClick(order)}
+                              disabled={isCancelling}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              {isCancelling ? 'Cancelling...' : 'Cancel Order'}
+                            </Button>
+                          )}
                           <Link href={`/orders/${order.id}`}>
                             <Button variant="outline" size="sm">
                               View Details
@@ -390,11 +493,102 @@ export default function OrdersPage() {
                 )}
               </div>
             </Modal>
+
+            {/* Cancel Order Confirmation Modal */}
+            <Modal
+              isOpen={isCancelModalOpen}
+              onClose={() => {
+                if (!isCancelling) {
+                  setIsCancelModalOpen(false);
+                  setOrderToCancel(null);
+                }
+              }}
+              title="Cancel Order Confirmation"
+              size="md"
+            >
+              <div className="p-6">
+                {orderToCancel && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-center text-red-600 mb-4">
+                      <AlertTriangle className="h-12 w-12" />
+                    </div>
+                    
+                    <div className="text-center">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Are you sure you want to cancel this order?
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        This action cannot be undone. The stock for all medicines in this order will be restored.
+                      </p>
+                      
+                      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                        <p className="font-medium text-gray-900">
+                          Order #{orderToCancel.orderNumber}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Total: {formatPrice(orderToCancel.totalAmount)} • {orderToCancel.items.length} item{orderToCancel.items.length !== 1 ? 's' : ''}
+                        </p>
+                        <p className="text-sm text-red-600 mt-1">
+                          Current Status: {orderToCancel.status}
+                        </p>
+                        <div className="mt-2 text-sm text-gray-600">
+                          <p className="font-medium">Items in this order:</p>
+                          <ul className="mt-1 space-y-1">
+                            {orderToCancel.items.slice(0, 3).map((item, index) => (
+                              <li key={index} className="flex justify-between">
+                                <span className="truncate">{item.medicine.name}</span>
+                                <span>{item.quantity} × {formatPrice(item.price)}</span>
+                              </li>
+                            ))}
+                            {orderToCancel.items.length > 3 && (
+                              <li className="text-gray-500">
+                                +{orderToCancel.items.length - 3} more items
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsCancelModalOpen(false);
+                          setOrderToCancel(null);
+                        }}
+                        disabled={isCancelling}
+                      >
+                        Keep Order
+                      </Button>
+                      <Button 
+                        variant="danger"
+                        onClick={handleCancelOrder}
+                        className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isCancelling}
+                      >
+                        {isCancelling ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Cancelling...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Yes, Cancel Order
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Modal>
           </>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Package className="h-12 w-12 text-gray-400" />
+              <ShoppingBag className="h-12 w-12 text-gray-400" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">No Orders Found</h3>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
@@ -403,12 +597,21 @@ export default function OrdersPage() {
                 : "You haven't placed any orders yet. Start shopping to discover amazing healthcare products!"}
             </p>
             {searchTerm || statusFilter !== 'ALL' ? (
-              <Button onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); }}>
-                Clear Filters
+              <Button 
+                onClick={() => { 
+                  setSearchTerm(''); 
+                  setStatusFilter('ALL'); 
+                  handleManualRefresh();
+                }}
+                className="flex items-center gap-2 mx-auto"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Clear Filters & Refresh
               </Button>
             ) : (
               <Link href="/shop">
-                <Button>
+                <Button className="flex items-center gap-2 mx-auto">
+                  <ShoppingBag className="h-4 w-4" />
                   Start Shopping
                 </Button>
               </Link>
@@ -418,26 +621,37 @@ export default function OrdersPage() {
 
         {/* Stats */}
         {orders.length > 0 && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+          <>
+            <div className="mt-8 mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Order Summary</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {stats.map((stat, index) => (
+                <div key={index} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">{stat.label}</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                    </div>
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                      stat.color === 'blue' ? 'bg-blue-50 text-blue-600' :
+                      stat.color === 'green' ? 'bg-green-50 text-green-600' :
+                      stat.color === 'yellow' ? 'bg-yellow-50 text-yellow-600' :
+                      stat.color === 'red' ? 'bg-red-50 text-red-600' :
+                      'bg-purple-50 text-purple-600'
+                    }`}>
+                      <stat.icon className="h-6 w-6" />
+                    </div>
                   </div>
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                    stat.color === 'blue' ? 'bg-blue-50 text-blue-600' :
-                    stat.color === 'green' ? 'bg-green-50 text-green-600' :
-                    stat.color === 'yellow' ? 'bg-yellow-50 text-yellow-600' :
-                    'bg-purple-50 text-purple-600'
-                  }`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
+                  {stat.label === 'Total Orders' && (
+                    <p className="text-xs text-gray-500 mt-3">
+                      Latest order: {orders.length > 0 ? formatDate(orders[0].createdAt) : 'N/A'}
+                    </p>
+                  )}
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

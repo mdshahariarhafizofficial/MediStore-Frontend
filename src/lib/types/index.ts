@@ -89,10 +89,12 @@ export interface Order {
   updatedAt: string;
   items: OrderItem[];
   customer?: {
+    id: string;
     name: string;
     email: string;
   };
   seller?: {
+    id: string;
     name: string;
     email: string;
   };

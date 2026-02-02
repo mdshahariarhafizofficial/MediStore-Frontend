@@ -21,4 +21,9 @@ export const orderApi = {
   addReview: async (medicineId: string, data: { rating: number; comment?: string }): Promise<ApiResponse> => {
     return axiosInstance.post(`/orders/${medicineId}/review`, data);
   },
+
+  cancelOrder: async (orderId: string): Promise<ApiResponse<Order>> => {
+    const response = await axiosInstance.put(`/orders/${orderId}/cancel`);
+    return response.data;
+  }
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 
 export default function SellerLayout({
   children,
@@ -8,7 +8,7 @@ export default function SellerLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ProtectedRoute roles={['SELLER']}>
+    <ProtectedRoute requiredRole="SELLER">
       {children}
     </ProtectedRoute>
   );

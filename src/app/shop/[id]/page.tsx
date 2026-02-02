@@ -9,7 +9,7 @@ import {
   Shield, Clock, Package, ChevronLeft, AlertCircle,
   CheckCircle, Clock as ClockIcon, User
 } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -25,6 +25,7 @@ export default function MedicineDetailsPage() {
   const medicineId = params.id as string;
   const { user, isAuthenticated } = useAuthStore();
   const { addItem } = useCartStore();
+  const queryClient = useQueryClient();
   
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -32,7 +33,7 @@ export default function MedicineDetailsPage() {
   const [review, setReview] = useState({ rating: 5, comment: '' });
 
   // Fetch medicine details
-  const { data: medicineData, isLoading } = useQuery({
+  const { data: medicineData, isLoading, refetch } = useQuery({
     queryKey: ['medicine', medicineId],
     queryFn: () => medicineApi.getMedicineById(medicineId),
     enabled: !!medicineId,
@@ -58,21 +59,81 @@ export default function MedicineDetailsPage() {
     },
   });
 
-  // Add review mutation
+  // Add review mutation - FIXED VERSION
   const addReviewMutation = useMutation({
     mutationFn: () =>
       orderApi.addReview(medicineId, {
         rating: review.rating,
         comment: review.comment,
       }),
-    onSuccess: () => {
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['medicine', medicineId] });
+
+      // Snapshot the previous value
+      const previousMedicine = queryClient.getQueryData(['medicine', medicineId]);
+
+      // Optimistically update the cache
+      if (previousMedicine && user) {
+        const updatedMedicine = {
+          ...previousMedicine,
+          data: {
+            ...previousMedicine.data,
+            reviews: [
+              {
+                id: `temp-${Date.now()}`,
+                rating: review.rating,
+                comment: review.comment,
+                customer: {
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                },
+                createdAt: new Date().toISOString(),
+              },
+              ...(previousMedicine.data.reviews || []),
+            ],
+            reviewCount: (previousMedicine.data.reviewCount || 0) + 1,
+            averageRating: calculateNewAverage(
+              previousMedicine.data.averageRating || 0,
+              previousMedicine.data.reviewCount || 0,
+              review.rating
+            ),
+          },
+        };
+        
+        queryClient.setQueryData(['medicine', medicineId], updatedMedicine);
+      }
+
+      return { previousMedicine };
+    },
+    onSuccess: (response) => {
       toast.success('Review submitted successfully!');
       setReview({ rating: 5, comment: '' });
+      
+      // Invalidate and refetch to get fresh data from server
+      queryClient.invalidateQueries({
+        queryKey: ['medicine', medicineId],
+      });
+      
+      // Also refetch manually to ensure data is fresh
+      refetch();
     },
-    onError: (error: any) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousMedicine) {
+        queryClient.setQueryData(['medicine', medicineId], context.previousMedicine);
+      }
       toast.error(error.message || 'Failed to submit review');
     },
   });
+
+  // Helper function to calculate new average rating
+  const calculateNewAverage = (currentAverage: number, currentCount: number, newRating: number) => {
+    const totalSum = currentAverage * currentCount + newRating;
+    const newCount = currentCount + 1;
+    return totalSum / newCount;
+  };
 
   const handleAddToCart = () => {
     if (!isAuthenticated || user?.role !== 'CUSTOMER') {
@@ -268,7 +329,7 @@ export default function MedicineDetailsPage() {
                         />
                       ))}
                       <span className="ml-2 font-medium text-gray-700">
-                        {medicine.averageRating?.toFixed(1) || '0.0'}
+                        {(medicine.averageRating || 0).toFixed(1)}
                       </span>
                       <span className="mx-1 text-gray-400">•</span>
                       <span className="text-gray-500">
@@ -460,7 +521,7 @@ export default function MedicineDetailsPage() {
               )}
 
               {/* Reviews List */}
-              {medicine.reviews?.length ? (
+              {(medicine.reviews && medicine.reviews.length > 0) ? (
                 <div className="space-y-6">
                   {medicine.reviews.map((rev: any) => (
                     <div key={rev.id} className="border-b border-gray-100 pb-6 last:border-0">
@@ -470,7 +531,9 @@ export default function MedicineDetailsPage() {
                             <User className="h-5 w-5 text-primary-600" />
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{rev.customer?.name}</p>
+                            <p className="font-medium text-gray-900">
+                              {rev.customer?.name || 'Anonymous User'}
+                            </p>
                             <p className="text-sm text-gray-500">
                               {new Date(rev.createdAt).toLocaleDateString()}
                             </p>

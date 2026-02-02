@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, ShoppingCart, Heart, Shield, Truck, Package } from 'lucide-react';
+import { Star, ShoppingCart, Heart, Shield, Truck, Package, View } from 'lucide-react';
 import { Medicine } from '@/lib/types';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/store/auth.store';
@@ -115,7 +115,8 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <div className="flex justify-center space-x-2">
             <Link href={`/shop/${medicine.id}`}>
-              <Button size="sm" variant="primary" className="text-black bg-white hover:text-white hover:bg-gray-100">
+              <Button size="sm" variant="primary" className="border-white/30 hover:bg-white/10 px-8 hover:text-white">
+                <View className="h-4 w-4 mr-2" />
                 Quick View
               </Button>
             </Link>

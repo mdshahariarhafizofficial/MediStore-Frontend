@@ -50,4 +50,12 @@ export const adminApi = {
   getDashboardStats: async (): Promise<ApiResponse<any>> => {
     return axiosInstance.get('/admin/dashboard/stats');
   },
+
+  updateOrderStatus: async (id: string, status: string): Promise<ApiResponse<Order>> => {
+    return axiosInstance.patch(`/admin/orders/${id}/status`, { status });
+  },
+
+  deleteOrder: async (id: string): Promise<ApiResponse> => {
+    return axiosInstance.delete(`/admin/orders/${id}`);
+  },
 };

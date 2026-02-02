@@ -103,29 +103,10 @@ export default function AdminOrdersPage() {
     if (!selectedOrder) return;
     
     try {
-      // Update order status API call
-      const token = localStorage.getItem('medistore_token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/admin/orders/${selectedOrder.id}/status`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success('Order status updated successfully');
-        refetch();
-        setIsUpdateStatusModalOpen(false);
-      } else {
-        toast.error(data.message || 'Failed to update order status');
-      }
+      await adminApi.updateOrderStatus(selectedOrder.id, newStatus);
+      toast.success('Order status updated successfully');
+      refetch();
+      setIsUpdateStatusModalOpen(false);
     } catch (error) {
       toast.error('Failed to update order status');
     }
@@ -135,27 +116,10 @@ export default function AdminOrdersPage() {
     if (!selectedOrder) return;
     
     try {
-      // Delete order API call
-      const token = localStorage.getItem('medistore_token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/admin/orders/${selectedOrder.id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success('Order deleted successfully');
-        refetch();
-        setIsDeleteModalOpen(false);
-      } else {
-        toast.error(data.message || 'Failed to delete order');
-      }
+      await adminApi.deleteOrder(selectedOrder.id);
+      toast.success('Order deleted successfully');
+      refetch();
+      setIsDeleteModalOpen(false);
     } catch (error) {
       toast.error('Failed to delete order');
     }

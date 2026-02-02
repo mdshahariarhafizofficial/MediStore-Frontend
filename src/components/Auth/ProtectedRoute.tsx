@@ -30,7 +30,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         try {
           const response = await authApi.getCurrentUser();
           if (response.success) {
-            setUser(response.data);
+            setUser(response.data ?? null);
             setToken(token);
           } else {
             localStorage.removeItem('medistore_token');

@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: 'MediStore - Your Trusted Online Pharmacy',
   description: 'Get authentic medicines delivered to your doorstep. Fast, reliable, and secure online pharmacy.',
   keywords: ['medicine', 'pharmacy', 'healthcare', 'online medicine', 'delivery'],
+    icons: {
+    icon: "/favicon.png",   
+    shortcut: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

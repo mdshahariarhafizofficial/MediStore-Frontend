@@ -27,6 +27,33 @@ export default function HomePage() {
   });
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 12,
+    minutes: 45,
+    seconds: 30,
+    expired: false
+  });
+
+  useEffect(() => {
+    const targetDate = new Date().getTime() + (12 * 60 * 60 * 1000) + (45 * 60 * 1000) + (30 * 1000);
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      if (distance <= 0) {
+        clearInterval(timer);
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0, expired: true });
+      } else {
+        setTimeLeft({
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000),
+          expired: false
+        });
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
   const heroSlides = [
     {
       title: "Your Health, Our Priority",
@@ -201,9 +228,26 @@ export default function HomePage() {
           <div className="bg-white/10 backdrop-blur-xl p-8 rounded-2xl border border-white/20 text-center shadow-xl">
             <p className="text-sm font-medium uppercase tracking-widest text-white/80 mb-2">Offer ends in</p>
             <div className="flex gap-4 text-3xl font-bold">
-              <div className="bg-white text-error-600 rounded-lg p-3 w-16">12<span className="block text-xs font-normal text-gray-500 uppercase mt-1">Hrs</span></div>
-              <div className="bg-white text-error-600 rounded-lg p-3 w-16">45<span className="block text-xs font-normal text-gray-500 uppercase mt-1">Min</span></div>
-              <div className="bg-white text-error-600 rounded-lg p-3 w-16">30<span className="block text-xs font-normal text-gray-500 uppercase mt-1">Sec</span></div>
+              {timeLeft.expired ? (
+                <div className="bg-white text-error-600 rounded-lg p-4 w-full text-xl font-bold uppercase tracking-wider">
+                  Offer Ended
+                </div>
+              ) : (
+                <>
+                  <div className="bg-white text-error-600 rounded-lg p-3 w-16">
+                    {timeLeft.hours.toString().padStart(2, '0')}
+                    <span className="block text-xs font-normal text-gray-500 uppercase mt-1">Hrs</span>
+                  </div>
+                  <div className="bg-white text-error-600 rounded-lg p-3 w-16">
+                    {timeLeft.minutes.toString().padStart(2, '0')}
+                    <span className="block text-xs font-normal text-gray-500 uppercase mt-1">Min</span>
+                  </div>
+                  <div className="bg-white text-error-600 rounded-lg p-3 w-16">
+                    {timeLeft.seconds.toString().padStart(2, '0')}
+                    <span className="block text-xs font-normal text-gray-500 uppercase mt-1">Sec</span>
+                  </div>
+                </>
+              )}
             </div>
             <Link href="/shop?category=vitamins">
               <Button variant="outline" className="w-full mt-6 border-white/30 text-black hover:bg-white transition-colors">Shop Now</Button>

@@ -350,13 +350,13 @@ export default function AdminDashboard() {
               <div className="flex items-end space-x-2 sm:space-x-4 h-64 w-full">
                 {/* CSS Based Bar Chart */}
                 {[45, 60, 30, 80, 55, 90, 75].map((val, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center group relative">
+                  <div key={idx} className="flex-1 h-full flex flex-col items-center group relative">
                     {/* Tooltip */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-10 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-bold py-1 px-2 rounded whitespace-nowrap shadow-lg">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-10 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-bold py-1 px-2 rounded whitespace-nowrap shadow-lg z-20">
                       {val} Orders
                     </div>
                     {/* Bar */}
-                    <div className="w-full relative h-[100%] bg-gray-100 dark:bg-gray-800 rounded-t-lg overflow-hidden">
+                    <div className="w-full relative h-full bg-gray-100 dark:bg-gray-800 rounded-t-lg overflow-hidden">
                        <div 
                          className="absolute bottom-0 w-full rounded-t-lg bg-gradient-to-t from-primary-600 to-primary-400 transition-all duration-1000 ease-out group-hover:brightness-110" 
                          style={{ height: `${val}%` }}

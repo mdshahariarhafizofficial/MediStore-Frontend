@@ -13,6 +13,7 @@ import MedicineCardSkeleton from '@/components/medicine/MedicineCardSkeleton';
 import AISearchSuggest from '@/components/ui/AISearchSuggest';
 import { useQuery } from '@tanstack/react-query';
 import { medicineApi } from '@/lib/api/medicine';
+import CountUp from 'react-countup';
 
 export default function HomePage() {
   const { data: featuredMedicines, isLoading } = useQuery({
@@ -139,19 +140,27 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
             <div>
-              <p className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">10K+</p>
+              <p className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">
+                <CountUp end={10} enableScrollSpy scrollSpyOnce duration={2.5} />K+
+              </p>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-1">Products</p>
             </div>
             <div>
-              <p className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">50K+</p>
+              <p className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">
+                <CountUp end={50} enableScrollSpy scrollSpyOnce duration={2.5} />K+
+              </p>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-1">Happy Customers</p>
             </div>
             <div>
-              <p className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">4.9/5</p>
+              <p className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">
+                <CountUp end={4.9} decimals={1} enableScrollSpy scrollSpyOnce duration={2.5} />/5
+              </p>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-1">Average Rating</p>
             </div>
             <div>
-              <p className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">2hr</p>
+              <p className="text-4xl font-extrabold text-primary-600 dark:text-primary-400">
+                <CountUp end={2} enableScrollSpy scrollSpyOnce duration={2.5} />hr
+              </p>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-1">Average Delivery Time</p>
             </div>
           </div>

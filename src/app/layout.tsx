@@ -4,6 +4,7 @@ import '../styles/globals.css';
 import GlobalLayoutWrapper from '@/components/layout/GlobalLayoutWrapper';
 import { Toaster } from 'react-hot-toast';
 import Providers from './providers';
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -44,6 +45,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={`${inter.className} bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased`}>
+        <NextTopLoader 
+          color="#0ea5e9"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #0ea5e9,0 0 5px #0ea5e9"
+        />
         <Providers>
           <GlobalLayoutWrapper>
             {children}

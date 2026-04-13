@@ -71,16 +71,20 @@ const Navbar: React.FC = () => {
   ];
 
   const getRoleLinks = () => {
-    if (!user) return publicLinks;
+    return publicLinks; // Main navbar always shows only public links for clean design
+  };
+
+  const getDropdownLinks = () => {
+    if (!user) return [];
     switch (user.role) {
       case 'CUSTOMER':
-        return [...publicLinks, ...customerLinks];
+        return customerLinks;
       case 'SELLER':
-        return [...publicLinks, ...sellerLinks];
+        return sellerLinks;
       case 'ADMIN':
-        return [...publicLinks, ...adminLinks];
+        return adminLinks;
       default:
-        return publicLinks;
+        return [];
     }
   };
 
@@ -90,18 +94,13 @@ const Navbar: React.FC = () => {
   const renderUserAvatar = () => {
     if (user?.photoUrl) {
       return (
-        <div 
-          className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 bg-gray-100"
-          style={{
-            backgroundImage: `url('${user.photoUrl}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        />
+        <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden ring-2 ring-primary-500/30 border border-white dark:border-gray-800 shadow-sm bg-gray-100 dark:bg-gray-800 transition-all">
+          <img src={user.photoUrl} alt={user.name} className="w-full h-full object-cover" />
+        </div>
       );
     } else {
       return (
-        <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold ring-2 ring-primary-500/30 border border-white dark:border-gray-800 shadow-sm transition-all">
           {user?.name?.charAt(0).toUpperCase()}
         </div>
       );
@@ -112,18 +111,13 @@ const Navbar: React.FC = () => {
   const renderMobileUserAvatar = () => {
     if (user?.photoUrl) {
       return (
-        <div 
-          className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-md"
-          style={{
-            backgroundImage: `url('${user.photoUrl}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        />
+        <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ring-2 ring-primary-500/30 border-2 border-white dark:border-gray-800 shadow-md transition-all">
+          <img src={user.photoUrl} alt={user.name} className="w-full h-full object-cover" />
+        </div>
       );
     } else {
       return (
-        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-lg ring-2 ring-primary-500/30 border-2 border-white dark:border-gray-800 shadow-md transition-all">
           {user?.name?.charAt(0).toUpperCase()}
         </div>
       );
@@ -209,21 +203,41 @@ const Navbar: React.FC = () => {
                         className="fixed inset-0 z-40" 
                         onClick={() => setUserMenuOpen(false)}
                       />
-                      <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50 animate-fade-in">
-                        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center space-x-3">
+                      <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 py-2 z-50 animate-fade-in origin-top-right transition-all">
+                        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center space-x-3 bg-gray-50/50 dark:bg-gray-800/20">
                           {renderUserAvatar()}
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+                          <div className="overflow-hidden">
+                            <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{user?.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                           </div>
                         </div>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-6 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center space-x-2"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          <span>Sign out</span>
-                        </button>
+                        <div className="py-2">
+                          {getDropdownLinks().map((item) => (
+                            <Link
+                              key={item.name}
+                              href={item.href}
+                              onClick={() => setUserMenuOpen(false)}
+                              className="px-5 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 flex items-center space-x-3 transition-colors relative"
+                            >
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.name}</span>
+                              {item.badge && item.badge > 0 && (
+                                <span className="absolute right-5 bg-error-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-sm">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </Link>
+                          ))}
+                        </div>
+                        <div className="border-t border-gray-100 dark:border-gray-800 pt-2">
+                          <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-5 py-2.5 text-sm text-error-600 dark:text-error-500 hover:bg-error-50 dark:hover:bg-error-900/30 flex items-center space-x-3 transition-colors group"
+                          >
+                            <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                            <span className="font-medium">Sign out</span>
+                          </button>
+                        </div>
                       </div>
                     </>
                   )}
@@ -288,33 +302,41 @@ const Navbar: React.FC = () => {
               })}
 
               {isAuthenticated ? (
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="px-4 py-3 flex items-center space-x-3">
-                    {renderMobileUserAvatar()}
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                      <p className="text-sm text-gray-500">{user?.email}</p>
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                    <div className="px-4 py-3 flex items-center space-x-3 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl mb-2 mx-2">
+                      {renderMobileUserAvatar()}
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{user?.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                      </div>
                     </div>
+                    {getDropdownLinks().map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center space-x-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors relative"
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span className="font-medium">{item.name}</span>
+                        {item.badge && item.badge > 0 && (
+                          <span className="absolute right-4 bg-error-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-md">
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    ))}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center space-x-3 px-4 py-3.5 text-error-600 dark:text-error-500 hover:bg-error-50 dark:hover:bg-error-900/30 rounded-lg w-full transition-colors mt-2"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      <span className="font-medium">Sign out</span>
+                    </button>
                   </div>
-                  <Link
-                    href="/profile"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg"
-                  >
-                    <User className="h-5 w-5" />
-                    <span>Profile</span>
-                  </Link>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex items-center space-x-3 px-4 py-3 text-error-600 hover:bg-error-50 rounded-lg w-full"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    <span>Sign out</span>
-                  </button>
-                </div>
               ) : (
                 <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
                   <Link

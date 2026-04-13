@@ -303,15 +303,18 @@ export default function HomePage() {
               spaceBetween={24}
               slidesPerView={1}
               breakpoints={{
-                640: { slidesPerView: 2 },
+                768: { slidesPerView: 2 },
                 1024: { slidesPerView: 4 }
               }}
               autoplay={{ delay: 3000, disableOnInteraction: false }}
-              className="pb-16"
-              pagination={{ clickable: true }}
+              className="pb-16 px-4"
+              pagination={{ clickable: true, dynamicBullets: true }}
+              navigation={true}
+              speed={800}
+              grabCursor={true}
             >
               {featuredMedicines.data.medicines.map((medicine: any) => (
-                <SwiperSlide key={medicine.id} className="!h-auto flex">
+                <SwiperSlide key={medicine.id} className="!h-auto flex py-4">
                   <MedicineCard medicine={medicine} />
                 </SwiperSlide>
               ))}
@@ -333,30 +336,33 @@ export default function HomePage() {
             <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">See what our users have to say about our service</p>
           </div>
           <Swiper
-            modules={[Autoplay, Pagination]}
+            modules={[Autoplay, Pagination, Navigation]}
             spaceBetween={32}
             slidesPerView={1}
             breakpoints={{
               768: { slidesPerView: 2 },
               1024: { slidesPerView: 3 }
             }}
-            pagination={{ clickable: true }}
+            pagination={{ clickable: true, dynamicBullets: true }}
+            navigation={true}
             autoplay={{ delay: 5000, disableOnInteraction: false }}
-            className="pb-16"
+            className="pb-16 px-4"
+            speed={800}
+            grabCursor={true}
           >
             {testimonials.map((test, index) => (
-              <SwiperSlide key={index} className="!h-auto flex">
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 relative w-full h-full flex flex-col">
-                  <div className="absolute top-8 right-8 text-primary-100 dark:text-gray-800 text-6xl font-serif">"</div>
+              <SwiperSlide key={index} className="!h-auto flex py-4">
+                <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-md border border-gray-100 dark:border-gray-700 relative w-full h-full flex flex-col hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="absolute top-8 right-8 text-primary-100 dark:text-gray-800 text-6xl font-serif opacity-50">"</div>
                   <div className="flex items-center space-x-1 mb-6">
                     {[...Array(test.rating)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />)}
                   </div>
-                  <p className="text-gray-700 dark:text-gray-300 italic mb-8 relative z-10 flex-grow">{test.content}</p>
-                  <div className="flex items-center mt-auto">
-                    <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">{test.avatar}</div>
+                  <p className="text-gray-700 dark:text-gray-300 italic mb-8 relative z-10 flex-grow text-lg leading-relaxed">{test.content}</p>
+                  <div className="flex items-center mt-auto border-t border-gray-100 dark:border-gray-800 pt-6">
+                    <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4 shadow-inner">{test.avatar}</div>
                     <div>
-                      <h4 className="font-bold text-gray-900 dark:text-white">{test.name}</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{test.role}</p>
+                      <h4 className="font-bold text-gray-900 dark:text-white text-lg">{test.name}</h4>
+                      <p className="text-sm font-medium text-primary-600 dark:text-primary-400">{test.role}</p>
                     </div>
                   </div>
                 </div>

@@ -25,8 +25,8 @@ const Button: React.FC<ButtonProps> = ({
     primary: 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500 shadow-md hover:shadow-lg',
     secondary: 'bg-secondary-600 hover:bg-secondary-700 text-white focus:ring-secondary-500 shadow-sm',
     danger: 'bg-error-600 hover:bg-error-700 text-white focus:ring-error-500 shadow-sm',
-    outline: 'border border-gray-300 hover:bg-gray-50 text-gray-700 focus:ring-gray-500 bg-white',
-    ghost: 'hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
+    outline: 'border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-gray-500 bg-white dark:bg-gray-900',
+    ghost: 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-gray-500',
   };
 
   const sizes = {

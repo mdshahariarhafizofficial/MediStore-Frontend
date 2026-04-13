@@ -3,19 +3,30 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShoppingCart, User, Package, Home, LogOut, Menu, X, Bell, ChevronDown } from 'lucide-react';
+import { ShoppingCart, User, Package, Home, LogOut, Menu, X, Bell, ChevronDown, Info, Phone } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useCartStore } from '@/store/cart.store';
 import Button from '@/components/ui/Button';
 import { authApi } from '@/lib/api/auth';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const { itemCount } = useCartStore();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('medistore_token');
@@ -36,6 +47,8 @@ const Navbar: React.FC = () => {
   const publicLinks = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Shop', href: '/shop', icon: Package },
+    { name: 'About', href: '/about', icon: Info },
+    { name: 'Contact', href: '/contact', icon: Phone },
   ];
 
   const customerLinks = [
@@ -118,47 +131,56 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? 'bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 dark:border-gray-800/50 py-2' 
+        : 'bg-white/40 dark:bg-[#0a0a0a]/40 backdrop-blur-sm border-b border-transparent py-4'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between items-center transition-all duration-300">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-primary-500/30 group-hover:scale-105 transition-all duration-300">
                 <Package className="h-6 w-6 text-white" />
               </div>
               <div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-400 dark:to-primary-600 bg-clip-text text-transparent">
                   MediStore
                 </span>
-                <p className="text-xs text-gray-500">Your Trusted Pharmacy</p>
               </div>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {links.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`
-                  relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                  ${pathname === item.href
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }
-                `}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.name}</span>
-                {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-error-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            ))}
+            {links.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`
+                    relative flex items-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 overflow-hidden group
+                    ${isActive
+                      ? 'text-primary-700 dark:text-primary-400 bg-primary-50/80 dark:bg-primary-900/20'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
+                    }
+                  `}
+                >
+                  <item.icon className="h-4 w-4 relative z-10 transition-transform group-hover:scale-110" />
+                  <span className="relative z-10">{item.name}</span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 dark:bg-primary-400 rounded-t-full shadow-[0_-2px_10px_rgba(59,130,246,0.5)]"></span>
+                  )}
+                  {item.badge && item.badge > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-error-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-sm z-20 animate-pulse">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Right Section */}
@@ -166,17 +188,20 @@ const Navbar: React.FC = () => {
             {isAuthenticated ? (
               <>
                 <div className="hidden md:block relative">
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    {renderUserAvatar()}
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{user?.role?.toLowerCase()}</p>
-                    </div>
-                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <ThemeToggle />
+                    <button
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      {renderUserAvatar()}
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role?.toLowerCase()}</p>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
                   
                   {userMenuOpen && (
                     <>
@@ -184,25 +209,17 @@ const Navbar: React.FC = () => {
                         className="fixed inset-0 z-40" 
                         onClick={() => setUserMenuOpen(false)}
                       />
-                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50 animate-fade-in">
-                        <div className="px-4 py-3 border-b border-gray-100 flex items-center space-x-3">
+                      <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50 animate-fade-in">
+                        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center space-x-3">
                           {renderUserAvatar()}
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                            <p className="text-xs text-gray-500">{user?.email}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
                           </div>
                         </div>
-                        {/* <Link
-                          href="/profile"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                        >
-                          <User className="h-4 w-4" />
-                          <span>Profile</span>
-                        </Link> */}
                         <button
                           onClick={handleLogout}
-                          className="w-full text-left px-6 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                          className="w-full text-left px-6 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center space-x-2"
                         >
                           <LogOut className="h-4 w-4" />
                           <span>Sign out</span>
@@ -214,6 +231,7 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <div className="hidden md:flex items-center space-x-2">
+                <ThemeToggle />
                 <Link href="/login">
                   <Button variant="outline" size="sm">
                     Sign in
@@ -230,7 +248,7 @@ const Navbar: React.FC = () => {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+              className="md:hidden p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -239,32 +257,35 @@ const Navbar: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-gray-200 animate-slide-up">
-            <div className="flex flex-col space-y-1 pt-4">
-              {links.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`
-                    flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium
-                    ${pathname === item.href
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-700 hover:bg-gray-50'
-                    }
-                  `}
-                >
-                  <div className="flex items-center space-x-3">
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.name}</span>
-                  </div>
-                  {item.badge && item.badge > 0 && (
-                    <span className="bg-error-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
+          <div className="md:hidden mt-4 pb-4 border-t border-gray-200/50 dark:border-gray-800/50 animate-slide-up bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl shadow-2xl p-4 absolute left-4 right-4">
+            <div className="flex flex-col space-y-1 pt-2">
+              {links.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`
+                      flex items-center justify-between px-4 py-3.5 rounded-xl text-base font-bold transition-all
+                      ${isActive
+                        ? 'bg-primary-50/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <item.icon className={`h-5 w-5 ${isActive ? 'scale-110' : ''} transition-transform`} />
+                      <span>{item.name}</span>
+                    </div>
+                    {item.badge && item.badge > 0 && (
+                      <span className="bg-error-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-md">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
 
               {isAuthenticated ? (
                 <div className="pt-4 border-t border-gray-200">

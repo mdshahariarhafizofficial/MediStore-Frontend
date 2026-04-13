@@ -102,27 +102,30 @@ export default function RegisterPage() {
     }
   };
 
-  return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
-              <Package className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">Create Your Account</h1>
-          <p className="text-gray-600 mt-2">Join MediStore and experience hassle-free healthcare</p>
-        </div>
+  if (isAuthenticated) return null;
 
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="md:grid md:grid-cols-2">
+  return (
+    <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300">
+       {/* Background Decorative Elements */}
+       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary-100 dark:bg-primary-900/20 blur-3xl opacity-50 pointer-events-none"></div>
+       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100 dark:bg-blue-900/20 blur-3xl opacity-50 pointer-events-none"></div>
+
+      <div className="w-full max-w-5xl relative z-10">
+        <div className="bg-white dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+          <div className="lg:grid lg:grid-cols-[1.3fr_1fr]">
             {/* Left Side - Form */}
-            <div className="p-8">
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                {/* Name */}
-                <Input
+            <div className="p-8 sm:p-12 relative">
+               <div className="text-center mb-10 lg:hidden">
+                 <Link href="/" className="inline-flex items-center justify-center p-3 mb-4 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl shadow-lg">
+                   <Package className="h-6 w-6 text-white" />
+                 </Link>
+                 <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">Create Account</h1>
+                 <p className="text-gray-600 dark:text-gray-400 mt-2">Join MediStore today</p>
+               </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                 {/* Name */}
+                 <Input
                   label="Full Name"
                   type="text"
                   placeholder="John Doe"
@@ -141,63 +144,57 @@ export default function RegisterPage() {
                   {...register('email')}
                 />
 
-                {/* Password */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      icon={<Lock className="h-5 w-5" />}
-                      error={errors.password?.message}
-                      {...register('password')}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
-                    </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                      Password
+                    </label>
+                    <div className="relative group">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        icon={<Lock className="h-5 w-5" />}
+                        error={errors.password?.message}
+                        {...register('password')}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Confirm Password */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <Input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      icon={<Lock className="h-5 w-5" />}
-                      error={errors.confirmPassword?.message}
-                      {...register('confirmPassword')}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
-                    </button>
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                      Confirm Password
+                    </label>
+                    <div className="relative group">
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        icon={<Lock className="h-5 w-5" />}
+                        error={errors.confirmPassword?.message}
+                        {...register('confirmPassword')}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Account Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                     Account Type
                   </label>
                   <div className="grid grid-cols-2 gap-4">
@@ -205,170 +202,150 @@ export default function RegisterPage() {
                       <label
                         key={role}
                         className={`
-                          flex items-center p-4 rounded-xl border cursor-pointer transition-all duration-200
+                          flex flex-col sm:flex-row items-center p-4 rounded-2xl border cursor-pointer transition-all duration-300 text-center sm:text-left
                           ${selectedRole === role
-                            ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-500 ring-opacity-20'
-                            : 'border-gray-300 hover:border-gray-400'
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500 border-transparent box-border dark:border-primary-500 shadow-md scale-[1.02]'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-900'
                           }
                         `}
                       >
                         <input
                           type="radio"
                           value={role}
-                          className="h-4 w-4 text-primary-600 focus:ring-primary-500"
+                          className="hidden"
                           {...register('role')}
                         />
-                        <div className="ml-4">
-                          <span className="text-sm font-medium text-gray-900">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-0 sm:mr-4 mb-2 sm:mb-0 transition-colors ${selectedRole === role ? 'border-primary-500' : 'border-gray-300 dark:border-gray-600'}`}>
+                           <div className={`w-2.5 h-2.5 rounded-full bg-primary-500 scale-0 transition-transform ${selectedRole === role ? 'scale-100' : ''}`}></div>
+                        </div>
+                        <div>
+                          <span className={`block text-sm font-bold ${selectedRole === role ? 'text-primary-700 dark:text-primary-400' : 'text-gray-900 dark:text-white'}`}>
                             {role === 'CUSTOMER' ? 'Customer' : 'Seller'}
                           </span>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {role === 'CUSTOMER' 
-                              ? 'Buy medicines for personal use' 
-                              : 'Sell medicines on our platform'
-                            }
-                          </p>
+                          <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            {role === 'CUSTOMER' ? 'Buy medicines' : 'Sell medicines'}
+                          </span>
                         </div>
                       </label>
                     ))}
                   </div>
                   {errors.role && (
-                    <p className="mt-2 text-sm text-error-600">{errors.role.message}</p>
+                    <p className="mt-2 text-sm text-error-600 dark:text-error-400 font-medium">{errors.role.message}</p>
                   )}
                 </div>
 
-                {/* Phone (Optional) */}
-                <Input
-                  label="Phone Number (Optional)"
-                  type="tel"
-                  placeholder="+880 1234 567890"
-                  icon={<Phone className="h-5 w-5" />}
-                  error={errors.phone?.message}
-                  {...register('phone')}
-                />
-
-                {/* Address (Optional) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Address (Optional)
-                  </label>
-                  <div className="relative">
-                    <textarea
-                      className="w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      rows={3}
-                      placeholder="Enter your full address"
-                      {...register('address')}
-                    />
-                    <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <Input
+                    label="Phone Number (Optional)"
+                    type="tel"
+                    placeholder="+880 1234 567890"
+                    icon={<Phone className="h-5 w-5" />}
+                    error={errors.phone?.message}
+                    {...register('phone')}
+                  />
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                      Address (Optional)
+                    </label>
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        className="w-full px-5 py-2.5 pl-10 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="Full delivery address"
+                        {...register('address')}
+                      />
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+                    </div>
                   </div>
                 </div>
 
                 {/* Terms */}
-                <div className="flex items-center">
-                  <input
-                    id="terms"
-                    type="checkbox"
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    required
-                  />
-                  <label htmlFor="terms" className="ml-3 text-sm text-gray-700">
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="terms"
+                      type="checkbox"
+                      className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      required
+                    />
+                  </div>
+                  <label htmlFor="terms" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                     I agree to the{' '}
-                    <Link href="/terms" className="text-primary-600 hover:text-primary-500 font-medium">
-                      Terms of Service
-                    </Link>{' '}
+                    <Link href="/terms" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 hover:underline">Terms of Service</Link>{' '}
                     and{' '}
-                    <Link href="/privacy" className="text-primary-600 hover:text-primary-500 font-medium">
-                      Privacy Policy
-                    </Link>
+                    <Link href="/privacy" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 hover:underline">Privacy Policy</Link>
                   </label>
                 </div>
 
-                {/* Submit Button */}
                 <Button
                   type="submit"
                   loading={isLoading}
                   fullWidth
-                  size="lg"
-                  className="mt-4"
+                  size="xl"
+                  className="font-bold tracking-wide shadow-primary-600/20 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-white bg-primary-600 hover:bg-primary-700"
                 >
                   Create Account
                 </Button>
               </form>
-
-              {/* Login Link */}
-              <div className="mt-8 text-center">
-                <p className="text-sm text-gray-600">
-                  Already have an account?{' '}
-                  <Link
-                    href="/login"
-                    className="font-semibold text-primary-600 hover:text-primary-500"
-                  >
-                    Sign in here
-                  </Link>
-                </p>
-              </div>
             </div>
 
             {/* Right Side - Info */}
-            <div className="bg-gradient-to-br from-primary-500 to-primary-700 p-8 text-white">
-              <div className="h-full flex flex-col justify-center">
-                <h2 className="text-2xl font-bold mb-6">Why Join MediStore?</h2>
-                
-                <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Package className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Wide Selection</h3>
-                      <p className="text-sm text-white/80">10,000+ authentic medicines from trusted brands</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Fast Delivery</h3>
-                      <p className="text-sm text-white/80">Same-day delivery in major cities across Bangladesh</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">100% Secure</h3>
-                      <p className="text-sm text-white/80">Verified medicines and secure payment options</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">24/7 Support</h3>
-                      <p className="text-sm text-white/80">Always available to help with your queries</p>
-                    </div>
-                  </div>
+            <div className="hidden lg:block relative bg-gradient-to-br from-primary-600 to-primary-800 p-12 text-white overflow-hidden">
+               <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576602976047-17f1c6fe9549?w=800&q=80')] opacity-10 mix-blend-overlay bg-cover bg-center"></div>
+              
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                <div>
+                   <Link href="/" className="inline-flex items-center justify-center p-3 mb-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/20 transition-all">
+                     <Package className="h-8 w-8 text-white" />
+                     <span className="ml-3 text-xl font-bold tracking-tight">MediStore</span>
+                   </Link>
+                   <h2 className="text-3xl lg:text-4xl font-bold mb-6 leading-tight">Your Health, <br/>Delivered.</h2>
+                   <p className="text-primary-100 text-lg mb-12">Join thousands of others taking control of their healthcare with our secure, lightning-fast platform.</p>
                 </div>
+                
+                <div className="space-y-8">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center flex-shrink-0 border border-white/10">
+                      <Package className="h-6 w-6 text-primary-200" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">Wide Selection</h3>
+                      <p className="text-sm text-primary-200">10,000+ authentic medicines from top brands.</p>
+                    </div>
+                  </div>
 
-                <div className="mt-8 pt-8 border-t border-white/20">
-                  <p className="text-sm text-white/80">
-                    Join 50,000+ satisfied customers who trust us with their health
-                  </p>
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center flex-shrink-0 border border-white/10">
+                       <svg className="h-6 w-6 text-primary-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">Fast Delivery</h3>
+                      <p className="text-sm text-primary-200">Same-day delivery in major locations.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center flex-shrink-0 border border-white/10">
+                        <svg className="h-6 w-6 text-primary-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">100% Secure</h3>
+                      <p className="text-sm text-primary-200">Verified products & protected payments.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+          
+          {/* Base Desktop Footer Link */}
+          <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-6 text-center lg:rounded-bl-3xl">
+             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+               Already have an account?{' '}
+               <Link href="/login" className="font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
+                 Sign in instead
+               </Link>
+             </p>
           </div>
         </div>
       </div>

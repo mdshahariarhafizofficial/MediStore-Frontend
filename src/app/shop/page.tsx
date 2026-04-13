@@ -9,9 +9,8 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import MedicineCard from '@/components/medicine/MedicineCard';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import MedicineCardSkeleton from '@/components/medicine/MedicineCardSkeleton';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { medicineApi } from '@/lib/api/medicine';
 import { Category } from '@/lib/types';
 import { cartApi } from '@/lib/api/cart';
@@ -117,38 +116,39 @@ export default function ShopPage() {
   ];
 
   const features = [
-    { icon: Shield, text: '100% Authentic', color: 'text-blue-600 bg-blue-50' },
-    { icon: Truck, text: 'Fast Delivery', color: 'text-green-600 bg-green-50' },
-    { icon: Star, text: 'Top Rated', color: 'text-yellow-600 bg-yellow-50' },
+    { icon: Shield, text: '100% Authentic', color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' },
+    { icon: Truck, text: 'Fast Delivery', color: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30' },
+    { icon: Star, text: 'Top Rated', color: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576602976047-17f1c6fe9549?w=1600&q=80')] opacity-5 mix-blend-overlay bg-cover bg-center"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Medicine Shop</h1>
-            <p className="text-xl text-primary-100 max-w-3xl mx-auto">
-              Discover authentic medicines from trusted manufacturers. Your health is our priority.
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">Discover Premium Medicines</h1>
+            <p className="text-lg md:text-xl text-primary-100 max-w-2xl mx-auto">
+              Find authentic, certified medications effortlessly. Filter categories, sort by relevance, and order with a single click.
             </p>
           </div>
 
           {/* Search Bar */}
-          <div className="mt-8 max-w-3xl mx-auto">
-            <div className="relative">
+          <div className="mt-10 max-w-3xl mx-auto">
+            <div className="relative group">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
                 placeholder="Search medicines, brands, or symptoms..."
-                className="w-full px-6 py-4 pl-14 rounded-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-white/30"
+                className="w-full px-6 py-4 pl-14 rounded-2xl text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-white/40 dark:focus:ring-primary-500/50 shadow-xl transition-shadow border-none placeholder-gray-500 dark:placeholder-gray-400"
               />
-              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
+              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400 dark:text-gray-500 group-focus-within:text-primary-500 transition-colors" />
               <button
                 onClick={handleFilter}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary-800 text-white px-6 py-2.5 rounded-xl hover:bg-primary-900 transition-colors"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary-800 dark:bg-primary-600 text-white px-6 py-2.5 rounded-xl hover:bg-primary-900 dark:hover:bg-primary-700 transition-all font-semibold shadow-md active:scale-95"
               >
                 Search
               </button>
@@ -157,39 +157,39 @@ export default function ShopPage() {
         </div>
       </div>
 
-      {/* Features */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      {/* Trust Features */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl p-6 shadow-lg flex items-center space-x-4"
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-100 dark:border-gray-700 flex items-center space-x-4 hover:-translate-y-1 transition-transform"
             >
               <div className={`p-3 rounded-lg ${feature.color}`}>
                 <feature.icon className="h-6 w-6" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{feature.text}</p>
-                <p className="text-sm text-gray-500">Guaranteed</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">{feature.text}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Guaranteed standard</p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 sticky top-24">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                  <Filter className="h-5 w-5 mr-2" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                  <Filter className="h-5 w-5 mr-2 text-primary-500" />
                   Filters
                 </h2>
                 <button
                   onClick={handleReset}
-                  className="text-sm text-primary-600 hover:text-primary-700"
+                  className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                 >
                   Clear All
                 </button>
@@ -197,12 +197,14 @@ export default function ShopPage() {
 
               {/* Categories */}
               <div className="mb-8">
-                <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
-                <div className="space-y-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 uppercase text-sm tracking-wider">Categories</h3>
+                <div className="space-y-1.5">
                   <button
                     onClick={() => setCategory('')}
-                    className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                      category === '' ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
+                    className={`block w-full text-left px-3 py-2.5 rounded-xl transition-all font-medium text-sm border ${
+                      category === '' 
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800/50' 
+                        : 'border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                     }`}
                   >
                     All Categories
@@ -211,13 +213,17 @@ export default function ShopPage() {
                     <button
                       key={cat.id}
                       onClick={() => setCategory(cat.id)}
-                      className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                        category === cat.id ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
+                      className={`block w-full text-left px-3 py-2.5 rounded-xl transition-all font-medium text-sm border ${
+                        category === cat.id 
+                          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800/50' 
+                          : 'border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                       }`}
                     >
                       <div className="flex justify-between items-center">
-                        <span>{cat.name}</span>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        <span className="truncate pr-2">{cat.name}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-md ${
+                           category === cat.id ? 'bg-primary-100 dark:bg-primary-800/50 text-primary-700 dark:text-primary-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        }`}>
                           {cat._count?.medicines || 0}
                         </span>
                       </div>
@@ -227,78 +233,80 @@ export default function ShopPage() {
               </div>
 
               {/* Price Range */}
-              <div className="mb-8">
-                <h3 className="font-semibold text-gray-900 mb-4">Price Range</h3>
+              <div className="mb-8 border-t border-gray-100 dark:border-gray-700 pt-6">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 uppercase text-sm tracking-wider">Price Range</h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm text-gray-600 mb-1">Min</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 uppercase">Min (৳)</label>
                       <input
                         type="number"
                         value={minPrice}
                         onChange={(e) => setMinPrice(e.target.value)}
                         placeholder="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all sm:text-sm dark:text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-600 mb-1">Max</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 uppercase">Max (৳)</label>
                       <input
                         type="number"
                         value={maxPrice}
                         onChange={(e) => setMaxPrice(e.target.value)}
                         placeholder="1000"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all sm:text-sm dark:text-white"
                       />
                     </div>
                   </div>
                   <button
                     onClick={handleFilter}
-                    className="w-full bg-primary-600 text-white py-2.5 rounded-lg hover:bg-primary-700 transition-colors"
+                    className="w-full bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600 text-white font-medium py-2.5 rounded-xl transition-colors text-sm"
                   >
-                    Apply Price Filter
+                    Apply Filter
                   </button>
                 </div>
               </div>
 
               {/* Sort Options */}
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-4">Sort By</h3>
-                <div className="space-y-2">
+              <div className="border-t border-gray-100 dark:border-gray-700 pt-6">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 uppercase text-sm tracking-wider">Sort By</h3>
+                <div className="space-y-1.5">
                   {sortOptions.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => setSortBy(option.value)}
-                      className={`flex items-center w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
-                        sortBy === option.value ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
+                      className={`flex items-center w-full text-left px-3 py-2.5 rounded-xl transition-all font-medium text-sm border ${
+                        sortBy === option.value 
+                          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800/50' 
+                          : 'border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                       }`}
                     >
-                      <option.icon className="h-4 w-4 mr-3" />
+                      <option.icon className={`h-4 w-4 mr-3 ${sortBy === option.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
                       <span>{option.label}</span>
                       {sortBy === option.value && (
-                        <span className="ml-auto">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        <span className="ml-auto text-xs opacity-70">
+                          {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                         </span>
                       )}
                     </button>
                   ))}
                 </div>
-                <div className="mt-4 flex space-x-2">
+                <div className="mt-4 flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl">
                   <button
                     onClick={() => setSortOrder('asc')}
-                    className={`flex-1 py-2 rounded-lg transition-colors ${
-                      sortOrder === 'asc' ? 'bg-primary-50 text-primary-700' : 'bg-gray-100 hover:bg-gray-200'
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                      sortOrder === 'asc' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     }`}
                   >
-                    Ascending
+                    Lower First
                   </button>
                   <button
                     onClick={() => setSortOrder('desc')}
-                    className={`flex-1 py-2 rounded-lg transition-colors ${
-                      sortOrder === 'desc' ? 'bg-primary-50 text-primary-700' : 'bg-gray-100 hover:bg-gray-200'
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                      sortOrder === 'desc' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     }`}
                   >
-                    Descending
+                    Higher First
                   </button>
                 </div>
               </div>
@@ -307,44 +315,48 @@ export default function ShopPage() {
 
           {/* Main Content */}
           <div className="lg:w-3/4">
-            {/* Header */}
-            <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Control Header */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    All Medicines
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                    Products
                     {medicinesData?.data?.pagination?.total && (
-                      <span className="text-gray-500 text-lg font-normal ml-2">
-                        ({medicinesData.data.pagination.total} products)
+                      <span className="text-gray-400 dark:text-gray-500 text-lg font-medium ml-2 border-l border-gray-200 dark:border-gray-700 pl-2">
+                        {medicinesData.data.pagination.total} <span className="text-sm font-normal">results</span>
                       </span>
                     )}
                   </h2>
                   {search && (
-                    <p className="text-gray-600 mt-1">
-                      Search results for: <span className="font-semibold">"{search}"</span>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      Results for <span className="font-semibold text-gray-900 dark:text-white">"{search}"</span>
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center space-x-4">
-                  <button
+                <div className="flex items-center space-x-3">
+                  <Button
                     onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    variant="outline"
+                    size="sm"
+                    className="lg:hidden flex items-center dark:border-gray-600 dark:text-gray-300"
                   >
                     <SlidersHorizontal className="h-4 w-4 mr-2" />
                     Filters
-                  </button>
+                  </Button>
 
-                  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  <div className="flex items-center bg-gray-100 dark:bg-gray-900 p-1 rounded-xl">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`p-2 ${viewMode === 'grid' ? 'bg-primary-50 text-primary-600' : 'hover:bg-gray-50'}`}
+                      className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                      aria-label="Grid View"
                     >
                       <Grid3X3 className="h-5 w-5" />
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`p-2 ${viewMode === 'list' ? 'bg-primary-50 text-primary-600' : 'hover:bg-gray-50'}`}
+                      className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                      aria-label="List View"
                     >
                       <List className="h-5 w-5" />
                     </button>
@@ -355,25 +367,25 @@ export default function ShopPage() {
 
             {/* Medicines Grid/List */}
             {isLoading ? (
-              <div className="flex justify-center items-center h-96">
-                <LoadingSpinner size="lg" text="Loading medicines..." />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {[...Array(6)].map((_, i) => <MedicineCardSkeleton key={i} />)}
               </div>
             ) : medicinesData?.data?.medicines?.length ? (
               <>
                 <div className={`
                   ${viewMode === 'grid'
-                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6'
-                    : 'space-y-6'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+                    : 'space-y-4'
                   }
                 `}>
                   {medicinesData.data.medicines.map((medicine: any) => (
                     viewMode === 'grid' ? (
                       <MedicineCard key={medicine.id} medicine={medicine} />
                     ) : (
-                      <div key={medicine.id} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-                        <div className="flex flex-col md:flex-row gap-6">
-                          <div className="md:w-1/4">
-                            <div className="relative h-48 bg-gray-100 rounded-xl overflow-hidden">
+                      <div key={medicine.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
+                        <div className="flex flex-col sm:flex-row gap-6">
+                          <div className="sm:w-1/3 md:w-1/4">
+                            <div className="relative h-48 sm:h-full min-h-[160px] bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
                               {medicine.imageUrl ? (
                                 <img
                                   src={medicine.imageUrl}
@@ -382,57 +394,63 @@ export default function ShopPage() {
                                 />
                               ) : (
                                 <div className="flex items-center justify-center h-full">
-                                  <Package className="h-12 w-12 text-gray-400" />
+                                  <Package className="h-12 w-12 text-gray-300 dark:text-gray-600" />
                                 </div>
                               )}
                             </div>
                           </div>
-                          <div className="md:w-3/4">
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">{medicine.name}</h3>
-                                <p className="text-gray-600 mb-3 line-clamp-2">{medicine.description}</p>
-                              </div>
-                              <div className="text-2xl font-bold text-primary-600">
-                                ৳{medicine.price}
-                              </div>
+                          <div className="sm:w-2/3 md:w-3/4 flex flex-col justify-between">
+                            <div>
+                               <div className="flex justify-between items-start mb-2">
+                                 <div>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary-600 transition-colors line-clamp-1">{medicine.name}</h3>
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">By {medicine.manufacturer}</p>
+                                 </div>
+                                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                   ৳{medicine.price}
+                                 </div>
+                               </div>
+                               <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{medicine.description}</p>
+                               
+                               <div className="flex flex-wrap gap-2 mb-4">
+                                 <span className="px-2.5 py-1 bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-md text-xs font-medium border border-primary-100 dark:border-primary-800/50">
+                                   {medicine.category?.name}
+                                 </span>
+                                 <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${medicine.stock > 0 ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800/50' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-100 dark:border-red-800/50'}`}>
+                                   Stock: {medicine.stock}
+                                 </span>
+                               </div>
                             </div>
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              <span className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm">
-                                {medicine.category?.name}
-                              </span>
-                              <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">
-                                Stock: {medicine.stock}
-                              </span>
-                              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
-                                {medicine.manufacturer}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center space-x-4">
-                                <div className="flex items-center">
-                                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                                  <span className="ml-1 font-medium">{medicine.averageRating?.toFixed(1) || '0.0'}</span>
-                                  <span className="text-gray-500 text-sm ml-1">
-                                    ({medicine.reviewCount || 0} reviews)
-                                  </span>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-auto">
+                              <div className="flex items-center space-x-3">
+                                <div className="flex items-center bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded border border-yellow-100 dark:border-yellow-800/30">
+                                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                  <span className="ml-1 font-semibold text-yellow-700 dark:text-yellow-500 text-sm">{medicine.averageRating?.toFixed(1) || '0.0'}</span>
                                 </div>
-                                <button 
-                                  onClick={() => router.push(`/shop/${medicine.id}`)}
-                                  className="text-primary-600 hover:text-primary-700 font-medium"
-                                >
-                                  View Details
-                                </button>
+                                <span className="text-gray-400 text-sm">
+                                  ({medicine.reviewCount || 0} reviews)
+                                </span>
                               </div>
-                              <Button 
-                                variant="primary" 
-                                size="md"
-                                onClick={() => handleAddToCart(medicine.id)}
-                                disabled={medicine.stock === 0}
-                              >
-                                <ShoppingCart className="h-4 w-4 mr-2" />
-                                Add to Cart
-                              </Button>
+                              <div className="flex space-x-2 w-full sm:w-auto">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="flex-1 sm:flex-none dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  onClick={() => router.push(`/shop/${medicine.id}`)}
+                                >
+                                  Details
+                                </Button>
+                                <Button 
+                                  variant="primary" 
+                                  size="sm"
+                                  className="flex-1 sm:flex-none"
+                                  onClick={() => handleAddToCart(medicine.id)}
+                                  disabled={medicine.stock === 0}
+                                >
+                                  <ShoppingCart className="h-4 w-4 sm:mr-2" />
+                                  <span className="hidden sm:inline">Add</span>
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -441,14 +459,14 @@ export default function ShopPage() {
                   ))}
                 </div>
 
-                {/* Pagination */}
+                {/* Advanced Pagination Navigation */}
                 {medicinesData.data.pagination.totalPages > 1 && (
-                  <div className="mt-12 flex justify-center">
-                    <div className="flex items-center space-x-2">
+                  <div className="mt-12 mb-8 flex flex-col items-center">
+                    <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                       <button
                         onClick={() => handlePageChange(page - 1)}
                         disabled={page === 1}
-                        className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        className="w-10 h-10 flex items-center justify-center rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </button>
@@ -469,10 +487,10 @@ export default function ShopPage() {
                           <button
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
-                            className={`w-10 h-10 rounded-lg font-medium ${
+                            className={`w-10 h-10 rounded-xl font-bold transition-all ${
                               page === pageNum
-                                ? 'bg-primary-600 text-white'
-                                : 'border border-gray-300 hover:bg-gray-50'
+                                ? 'bg-primary-600 text-white shadow-md'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                             }`}
                           >
                             {pageNum}
@@ -483,37 +501,28 @@ export default function ShopPage() {
                       <button
                         onClick={() => handlePageChange(page + 1)}
                         disabled={page === medicinesData.data.pagination.totalPages}
-                        className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        className="w-10 h-10 flex items-center justify-center rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                       >
                         <ChevronRight className="h-5 w-5" />
                       </button>
-                    </div>
-                    <div className="ml-6 flex items-center text-gray-600">
-                      <span className="text-sm">
-                        Page {page} of {medicinesData.data.pagination.totalPages}
-                      </span>
-                      <span className="mx-2">•</span>
-                      <span className="text-sm">
-                        {medicinesData.data.pagination.total} total medicines
-                      </span>
                     </div>
                   </div>
                 )}
               </>
             ) : (
-              <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Package className="h-12 w-12 text-gray-400" />
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-16 text-center">
+                <div className="w-24 h-24 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Package className="h-10 w-10 text-gray-400 dark:text-gray-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">No Medicines Found</h3>
-                <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No Products Found</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
                   {search
-                    ? `No medicines found for "${search}". Try a different search term.`
-                    : 'No medicines available at the moment. Please check back later.'}
+                    ? `We couldn't find anything matching "${search}". Please try adjusting your filters.`
+                    : 'No medicines available right now. Please check back later.'}
                 </p>
-                {search && (
-                  <Button onClick={handleReset} variant="outline">
-                    Clear Search
+                {(search || category || minPrice || maxPrice) && (
+                  <Button onClick={handleReset} variant="primary" className="px-8 shadow-sm">
+                    Clear All Filters
                   </Button>
                 )}
               </div>

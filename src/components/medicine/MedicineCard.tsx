@@ -65,17 +65,17 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
   };
 
   const getStockStatus = () => {
-    if (medicine.stock === 0) return { text: 'Out of Stock', color: 'bg-red-100 text-red-800' };
-    if (medicine.stock < 10) return { text: 'Low Stock', color: 'bg-yellow-100 text-yellow-800' };
-    return { text: 'In Stock', color: 'bg-green-100 text-green-800' };
+    if (medicine.stock === 0) return { text: 'Out of Stock', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' };
+    if (medicine.stock < 10) return { text: 'Low Stock', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' };
+    return { text: 'In Stock', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' };
   };
 
   const stockStatus = getStockStatus();
 
   return (
-    <div className="group bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+    <div className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl dark:hover:shadow-primary-900/20 transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full">
       {/* Image Section */}
-      <div className="relative h-56 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+      <div className="relative h-56 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden shrink-0">
         <Link href={`/shop/${medicine.id}`}>
           <div className="relative w-full h-full">
             {medicine.imageUrl ? (
@@ -88,10 +88,10 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mb-4">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
                   <Package className="h-10 w-10 text-white" />
                 </div>
-                <p className="text-sm text-gray-500 text-center">Medicine Image</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Medicine Image</p>
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -106,9 +106,9 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
         {/* Wishlist Button */}
         <button
           onClick={handleWishlist}
-          className="absolute top-4 left-4 p-2.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 shadow-lg hover:shadow-xl"
+          className="absolute top-4 left-4 p-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full hover:bg-white dark:hover:bg-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl group/wishlist border border-transparent dark:border-gray-600"
         >
-          <Heart className={`h-4 w-4 ${isInWishlist(medicine.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+          <Heart className={`h-4 w-4 ${isInWishlist(medicine.id) ? 'fill-red-500 text-red-500' : 'text-gray-600 dark:text-gray-300 group-hover/wishlist:text-red-500 transition-colors'}`} />
         </button>
 
         {/* Quick View Overlay */}
@@ -120,46 +120,34 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
                 Quick View
               </Button>
             </Link>
-            {medicine.stock > 0 && (
-              <Button
-                size="sm"
-                variant="primary"
-                loading={isAdding}
-                onClick={handleAddToCart}
-                className="flex items-center space-x-1.5"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                <span>Add to Cart</span>
-              </Button>
-            )}
           </div>
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="p-5">
+      <div className="p-5 flex flex-col flex-grow">
         {/* Category */}
         <div className="mb-3">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-transparent dark:border-primary-800/50">
             {medicine.category?.name || 'Medicine'}
           </span>
         </div>
 
         {/* Medicine Name */}
         <Link href={`/shop/${medicine.id}`}>
-          <h3 className="font-bold text-gray-900 hover:text-primary-600 transition-colors line-clamp-1 mb-2 text-lg">
+          <h3 className="font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2 mb-2 text-lg">
             {medicine.name}
           </h3>
         </Link>
 
         {/* Manufacturer */}
-        <div className="flex items-center text-sm text-gray-500 mb-3">
+        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
           <Shield className="h-3.5 w-3.5 mr-1.5" />
-          <span>By {medicine.manufacturer}</span>
+          <span className="line-clamp-1">By {medicine.manufacturer}</span>
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed flex-grow">
           {medicine.description}
         </p>
 
@@ -172,44 +160,43 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
                 className={`h-4 w-4 ${
                   i < Math.round(medicine.averageRating || 0)
                     ? 'text-yellow-400 fill-current'
-                    : 'text-gray-300'
+                    : 'text-gray-300 dark:text-gray-600'
                 }`}
               />
             ))}
           </div>
-          <span className="ml-2 text-sm font-medium text-gray-700">
+          <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             {medicine.averageRating?.toFixed(1) || '0.0'}
           </span>
-          <span className="mx-1 text-gray-400">•</span>
-          <span className="text-sm text-gray-500">
+          <span className="mx-1 text-gray-400 dark:text-gray-600">•</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {medicine.reviewCount || 0} reviews
           </span>
         </div>
 
         {/* Price & Action */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
           <div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {formatPrice(medicine.price)}
             </p>
-            <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
+            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
               <Truck className="h-3 w-3" />
-              <span>Delivery in 2-4 hours</span>
+              <span>Delivery 2-4 hrs</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-1 text-sm text-gray-600">
-              <Package className="h-4 w-4" />
-              <span>{medicine.stock} units</span>
-            </div>
+          <div className="flex flex-col items-end gap-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+              <Package className="h-3 w-3 mr-1" /> {medicine.stock} left
+            </span>
             {medicine.stock > 0 && (
               <Button
                 variant="primary"
                 size="sm"
                 loading={isAdding}
                 onClick={handleAddToCart}
-                className="px-4 py-2 rounded-lg shadow-md hover:shadow-lg"
+                className="px-4 py-2 rounded-lg shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all"
               >
                 <ShoppingCart className="h-4 w-4" />
               </Button>

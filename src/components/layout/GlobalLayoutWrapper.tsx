@@ -11,9 +11,13 @@ export default function GlobalLayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAdminRoute = pathname?.startsWith('/admin');
+  const isDashboardRoute = 
+    pathname?.startsWith('/admin') || 
+    pathname?.startsWith('/seller') || 
+    pathname?.startsWith('/profile') || 
+    pathname?.startsWith('/orders');
 
-  if (isAdminRoute) {
+  if (isDashboardRoute) {
     return <main className="min-h-screen w-full bg-gray-50 dark:bg-gray-900">{children}</main>;
   }
 

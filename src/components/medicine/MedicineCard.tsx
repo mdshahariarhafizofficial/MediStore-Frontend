@@ -73,9 +73,9 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
   const stockStatus = getStockStatus();
 
   return (
-    <div className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl dark:hover:shadow-primary-900/20 transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full">
+    <div className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl dark:hover:shadow-primary-900/20 transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-[460px]">
       {/* Image Section */}
-      <div className="relative h-56 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden shrink-0">
+      <div className="relative h-52 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden shrink-0">
         <Link href={`/shop/${medicine.id}`}>
           <div className="relative w-full h-full">
             {medicine.imageUrl ? (

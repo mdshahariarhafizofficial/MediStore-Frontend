@@ -14,6 +14,11 @@ import AISearchSuggest from '@/components/ui/AISearchSuggest';
 import { useQuery } from '@tanstack/react-query';
 import { medicineApi } from '@/lib/api/medicine';
 import CountUp from 'react-countup';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
 export default function HomePage() {
   const { data: featuredMedicines, isLoading } = useQuery({
@@ -288,16 +293,29 @@ export default function HomePage() {
           </div>
           {isLoading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              {[1, 2, 3, 4].map((i) => (
                 <MedicineCardSkeleton key={i} />
               ))}
             </div>
           ) : featuredMedicines?.data?.medicines.length ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredMedicines.data.medicines.map((medicine) => (
-                <MedicineCard key={medicine.id} medicine={medicine} />
+            <Swiper
+              modules={[Autoplay, Pagination, Navigation]}
+              spaceBetween={24}
+              slidesPerView={1}
+              breakpoints={{
+                640: { slidesPerView: 2 },
+                1024: { slidesPerView: 4 }
+              }}
+              autoplay={{ delay: 3000, disableOnInteraction: false }}
+              className="pb-16"
+              pagination={{ clickable: true }}
+            >
+              {featuredMedicines.data.medicines.map((medicine: any) => (
+                <SwiperSlide key={medicine.id} className="!h-auto flex">
+                  <MedicineCard medicine={medicine} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           ) : (
              <div className="text-center py-12">
                <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -314,24 +332,37 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Loved by Customers</h2>
             <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">See what our users have to say about our service</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            spaceBetween={32}
+            slidesPerView={1}
+            breakpoints={{
+              768: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 }
+            }}
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
+            className="pb-16"
+          >
             {testimonials.map((test, index) => (
-              <div key={index} className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 relative">
-                <div className="absolute top-8 right-8 text-primary-100 dark:text-gray-800 text-6xl font-serif">"</div>
-                <div className="flex items-center space-x-1 mb-6">
-                  {[...Array(test.rating)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />)}
-                </div>
-                <p className="text-gray-700 dark:text-gray-300 italic mb-8 relative z-10">{test.content}</p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">{test.avatar}</div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white">{test.name}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{test.role}</p>
+              <SwiperSlide key={index} className="!h-auto flex">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 relative w-full h-full flex flex-col">
+                  <div className="absolute top-8 right-8 text-primary-100 dark:text-gray-800 text-6xl font-serif">"</div>
+                  <div className="flex items-center space-x-1 mb-6">
+                    {[...Array(test.rating)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />)}
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 italic mb-8 relative z-10 flex-grow">{test.content}</p>
+                  <div className="flex items-center mt-auto">
+                    <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">{test.avatar}</div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 dark:text-white">{test.name}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{test.role}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </SwiperSlide>
             ))}
-          </div>
+          </Swiper>
         </div>
       </section>
 
@@ -339,12 +370,23 @@ export default function HomePage() {
       <section className="py-12 border-y border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-8">Trusted by Top Healthcare Providers</p>
-          <div className="flex flex-wrap justify-center gap-12 sm:gap-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-             {/* Placeholders for partner logos */}
-             <div className="text-xl font-bold font-serif dark:text-white">Beximco Pharma</div>
-             <div className="text-xl font-bold font-serif dark:text-white">Square Meds</div>
-             <div className="text-xl font-bold font-serif dark:text-white">Incepta</div>
-             <div className="text-xl font-bold font-serif dark:text-white">Renata Ltd</div>
+          <div className="flex flex-wrap justify-center items-center gap-12 sm:gap-20 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+             <div className="flex items-center space-x-3 group cursor-pointer hover:scale-105 transition-transform duration-300">
+               <Shield className="h-10 w-10 text-primary-600 group-hover:text-primary-500 transition-colors" />
+               <span className="text-2xl font-extrabold font-serif dark:text-white">Beximco</span>
+             </div>
+             <div className="flex items-center space-x-3 group cursor-pointer hover:scale-105 transition-transform duration-300">
+               <Package className="h-10 w-10 text-green-600 group-hover:text-green-500 transition-colors" />
+               <span className="text-2xl font-extrabold font-serif dark:text-white">Square</span>
+             </div>
+             <div className="flex items-center space-x-3 group cursor-pointer hover:scale-105 transition-transform duration-300">
+               <Activity className="h-10 w-10 text-blue-600 group-hover:text-blue-500 transition-colors" />
+               <span className="text-2xl font-extrabold font-serif dark:text-white">Incepta</span>
+             </div>
+             <div className="flex items-center space-x-3 group cursor-pointer hover:scale-105 transition-transform duration-300">
+               <HeartPulse className="h-10 w-10 text-error-600 group-hover:text-error-500 transition-colors" />
+               <span className="text-2xl font-extrabold font-serif dark:text-white">Renata</span>
+             </div>
           </div>
         </div>
       </section>

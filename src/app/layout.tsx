@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../styles/globals.css';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import GlobalLayoutWrapper from '@/components/layout/GlobalLayoutWrapper';
 import { Toaster } from 'react-hot-toast';
 import Providers from './providers';
 
@@ -46,11 +45,9 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className={`${inter.className} bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased`}>
         <Providers>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-          </div>
+          <GlobalLayoutWrapper>
+            {children}
+          </GlobalLayoutWrapper>
           <Toaster 
             position="top-right"
             toastOptions={{

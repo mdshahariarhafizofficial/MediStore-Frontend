@@ -9,6 +9,7 @@ import NextTopLoader from 'nextjs-toploader';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://medistore-frontend.vercel.app'), // Replace with your production URL
   title: 'MediStore - Your Trusted Online Pharmacy',
   description: 'Get authentic medicines delivered to your doorstep. Fast, reliable, and secure online pharmacy in Bangladesh.',
   keywords: ['medicine', 'pharmacy', 'healthcare', 'online medicine', 'delivery', 'Bangladesh pharmacy'],
